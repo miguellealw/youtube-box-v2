@@ -12,6 +12,18 @@ import { cn } from "@/lib/utils"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 import type { Category } from "@/db/schema"
 
+/** YouTube pages can overlap; React keys must be unique per channel. */
+function dedupeSubscriptionsByChannelId(items: Subscription[]): Subscription[] {
+  const seen = new Set<string>()
+  const out: Subscription[] = []
+  for (const s of items) {
+    if (seen.has(s.channelId)) continue
+    seen.add(s.channelId)
+    out.push(s)
+  }
+  return out
+}
+
 function formatSubscriberCount(count: string) {
   const n = parseInt(count, 10)
   if (isNaN(n)) return ""
@@ -117,7 +129,7 @@ export function SubscriptionList({
   useEffect(() => {
     loadPage()
       .then(({ items, nextPageToken }) => {
-        setItems(items)
+        setItems(dedupeSubscriptionsByChannelId(items))
         setNextPageToken(nextPageToken)
         nextTokenRef.current = nextPageToken
       })
@@ -141,7 +153,9 @@ export function SubscriptionList({
           setLoadingMore(true)
           loadPage(nextTokenRef.current)
             .then(({ items: newItems, nextPageToken }) => {
-              setItems((prev) => [...prev, ...newItems])
+              setItems((prev) =>
+                dedupeSubscriptionsByChannelId([...prev, ...newItems])
+              )
               setNextPageToken(nextPageToken)
               nextTokenRef.current = nextPageToken
             })
