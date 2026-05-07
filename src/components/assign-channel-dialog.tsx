@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -35,7 +35,8 @@ export function AssignChannelDialog({
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [assigned, setAssigned] = useState(new Set(assignedCategoryIds))
-  const [pending, startTransition] = useTransition()
+  const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [createError, setCreateError] = useState<string | null>(null)
   const [categorySearch, setCategorySearch] = useState("")
@@ -49,8 +50,10 @@ export function AssignChannelDialog({
     }
   }
 
-  function toggle(categoryId: string) {
-    startTransition(async () => {
+  async function toggle(categoryId: string) {
+    if (pendingCategoryId) return
+    setPendingCategoryId(categoryId)
+    try {
       if (assigned.has(categoryId)) {
         const result = await removeChannel(subscription.channelId, categoryId)
         if (result.success) {
@@ -73,39 +76,42 @@ export function AssignChannelDialog({
           toast.success("Added to category")
         }
       }
-    })
+    } finally {
+      setPendingCategoryId(null)
+    }
   }
 
-  function createAndAdd() {
+  async function createAndAdd() {
     const name = newCategoryName.trim()
     if (!name) return
     setCreateError(null)
-    startTransition(async () => {
-      try {
-        const created = await createCategoryQuick({ name })
-        if (!created.success) {
-          setCreateError(created.error)
-          return
-        }
-        const add = await assignChannel(created.category.id, {
-          channelId: subscription.channelId,
-          channelName: subscription.channelName,
-          channelThumbnail: subscription.channelThumbnail,
-          subscriberCount: subscription.subscriberCount,
-        })
-        if (!add.success) {
-          toast.error("Category created but could not add this channel. Try again from the list.")
-          router.refresh()
-          return
-        }
-        setAssigned((prev) => new Set([...prev, created.category.id]))
-        setNewCategoryName("")
-        toast.success(`Created "${created.category.name}" and added this channel`)
-        router.refresh()
-      } catch {
-        toast.error("Something went wrong. Please try again.")
+    setCreating(true)
+    try {
+      const created = await createCategoryQuick({ name })
+      if (!created.success) {
+        setCreateError(created.error)
+        return
       }
-    })
+      const add = await assignChannel(created.category.id, {
+        channelId: subscription.channelId,
+        channelName: subscription.channelName,
+        channelThumbnail: subscription.channelThumbnail,
+        subscriberCount: subscription.subscriberCount,
+      })
+      if (!add.success) {
+        toast.error("Category created but could not add this channel. Try again from the list.")
+        router.refresh()
+        return
+      }
+      setAssigned((prev) => new Set([...prev, created.category.id]))
+      setNewCategoryName("")
+      toast.success(`Created "${created.category.name}" and added this channel`)
+      router.refresh()
+    } catch {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -145,22 +151,23 @@ export function AssignChannelDialog({
                 )
                 .map((cat) => {
                   const isAssigned = assigned.has(cat.id)
+                  const isPending = pendingCategoryId === cat.id
                   return (
                     <li key={cat.id}>
                       <button
                         type="button"
                         onClick={() => toggle(cat.id)}
-                        disabled={pending}
+                        disabled={!!pendingCategoryId}
                         className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-50"
                       >
                         <span className="text-base leading-none shrink-0">{cat.emoji ?? "📁"}</span>
                         <span className="flex-1 text-left">{cat.name}</span>
-                        {pending ? (
+                        {isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         ) : isAssigned ? (
                           <Check className="h-4 w-4 text-primary" />
                         ) : null}
-                        {isAssigned && (
+                        {isAssigned && !isPending && (
                           <Badge variant="secondary" className="text-xs">added</Badge>
                         )}
                       </button>
@@ -192,7 +199,7 @@ export function AssignChannelDialog({
               placeholder="Category name"
               value={newCategoryName}
               maxLength={50}
-              disabled={pending}
+              disabled={creating}
               onChange={(e) => setNewCategoryName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -206,10 +213,10 @@ export function AssignChannelDialog({
               type="button"
               size="sm"
               className="shrink-0"
-              disabled={pending || !newCategoryName.trim()}
+              disabled={creating || !newCategoryName.trim()}
               onClick={createAndAdd}
             >
-              {pending ? (
+              {creating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 "Create & add"
