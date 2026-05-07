@@ -57,7 +57,7 @@ export function AddChannelsDialog({
   const [search, setSearch] = useState("")
   const [assigned, setAssigned] = useState(new Set(initialAssignedIds))
   const [pendingId, setPendingId] = useState<string | null>(null)
-  const sentinelRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const nextTokenRef = useRef<string | null>(null)
   const loadingMoreRef = useRef(false)
   const hasLoaded = useRef(false)
@@ -86,38 +86,25 @@ export function AddChannelsDialog({
       .finally(() => setInitialLoading(false))
   }, [open, loadPage])
 
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel || !open) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          nextTokenRef.current &&
-          !loadingMoreRef.current
-        ) {
-          loadingMoreRef.current = true
-          setLoadingMore(true)
-          loadPage(nextTokenRef.current)
-            .then(({ items: newItems, nextPageToken }) => {
-              setItems((prev) => [...prev, ...newItems])
-              setNextPageToken(nextPageToken)
-              nextTokenRef.current = nextPageToken
-            })
-            .catch(() => setError("Failed to load more. Please try again."))
-            .finally(() => {
-              loadingMoreRef.current = false
-              setLoadingMore(false)
-            })
-        }
-      },
-      { rootMargin: "200px" }
-    )
-
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [open, loadPage])
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el || loadingMoreRef.current || !nextTokenRef.current) return
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      loadingMoreRef.current = true
+      setLoadingMore(true)
+      loadPage(nextTokenRef.current)
+        .then(({ items: newItems, nextPageToken }) => {
+          setItems((prev) => [...prev, ...newItems])
+          setNextPageToken(nextPageToken)
+          nextTokenRef.current = nextPageToken
+        })
+        .catch(() => setError("Failed to load more. Please try again."))
+        .finally(() => {
+          loadingMoreRef.current = false
+          setLoadingMore(false)
+        })
+    }
+  }, [loadPage])
 
   async function toggle(sub: Subscription) {
     if (pendingId) return
@@ -175,7 +162,11 @@ export function AddChannelsDialog({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <div className="flex-1 overflow-y-auto min-h-0 -mx-4 px-4">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto min-h-0 -mx-4 px-4"
+        >
           {error && <p className="text-sm text-destructive py-2">{error}</p>}
           <ul className="space-y-1.5 pb-2">
             {initialLoading
@@ -231,7 +222,6 @@ export function AddChannelsDialog({
                 <ChannelSkeleton key={`more-${i}`} />
               ))}
           </ul>
-          <div ref={sentinelRef} className="h-1" aria-hidden />
           {!initialLoading && !nextPageToken && items.length > 0 && (
             <p className="text-center text-xs text-muted-foreground pb-4">
               All {items.length} subscriptions loaded
