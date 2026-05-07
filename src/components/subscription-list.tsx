@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { AssignChannelDialog } from "@/components/assign-channel-dialog"
+import { cn } from "@/lib/utils"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 import type { Category } from "@/db/schema"
 
@@ -192,47 +193,55 @@ export function SubscriptionList({
       : "flex flex-col gap-2"
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <Input
-          placeholder="Search loaded subscriptions…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:max-w-sm"
-        />
-        <div
-          className="inline-flex rounded-lg border bg-muted/30 p-0.5 self-start sm:self-auto"
-          role="group"
-          aria-label="Subscription layout"
-        >
-          <Button
-            type="button"
-            size="icon-sm"
-            variant={layout === "stacked" ? "secondary" : "ghost"}
-            className={layout === "stacked" ? "shadow-none" : undefined}
-            onClick={() => setLayoutPersist("stacked")}
-            aria-pressed={layout === "stacked"}
-            aria-label="Stacked list"
+    <div>
+      <div
+        className={cn(
+          "sticky top-0 z-30 -mx-4 px-4 pb-3 pt-4 md:-mx-6 md:px-6 md:pt-5",
+          "mb-4 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80",
+          "border-b border-border/80"
+        )}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <Input
+            placeholder="Search loaded subscriptions…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:max-w-sm"
+          />
+          <div
+            className="inline-flex rounded-lg border bg-muted/30 p-0.5 self-start sm:self-auto"
+            role="group"
+            aria-label="Subscription layout"
           >
-            <LayoutList className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant={layout === "grid" ? "secondary" : "ghost"}
-            className={layout === "grid" ? "shadow-none" : undefined}
-            onClick={() => setLayoutPersist("grid")}
-            aria-pressed={layout === "grid"}
-            aria-label="Grid"
-          >
-            <LayoutGrid className="size-4" />
-          </Button>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant={layout === "stacked" ? "secondary" : "ghost"}
+              className={layout === "stacked" ? "shadow-none" : undefined}
+              onClick={() => setLayoutPersist("stacked")}
+              aria-pressed={layout === "stacked"}
+              aria-label="Stacked list"
+            >
+              <LayoutList className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant={layout === "grid" ? "secondary" : "ghost"}
+              className={layout === "grid" ? "shadow-none" : undefined}
+              onClick={() => setLayoutPersist("grid")}
+              aria-pressed={layout === "grid"}
+              aria-label="Grid"
+            >
+              <LayoutGrid className="size-4" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <p className="hidden md:block text-xs text-muted-foreground">
-        Drag the handle next to a channel onto a category in the sidebar.
-      </p>
+        <p className="hidden md:block text-xs text-muted-foreground mt-3">
+          Drag the handle next to a channel onto a category in the sidebar.
+        </p>
+      </div>
 
       <ul className={listClass}>
         {initialLoading
@@ -354,7 +363,7 @@ export function SubscriptionList({
       <div ref={sentinelRef} className="h-1" aria-hidden />
 
       {!initialLoading && !nextPageToken && items.length > 0 && (
-        <p className="text-center text-xs text-muted-foreground pb-4">
+        <p className="text-center text-xs text-muted-foreground pt-2 pb-4">
           All {items.length} subscriptions loaded
         </p>
       )}

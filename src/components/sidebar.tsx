@@ -68,7 +68,7 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:flex w-60 lg:w-64 shrink-0 border-r bg-muted/30 h-screen sticky top-0 flex-col">
+    <aside className="hidden md:flex w-60 lg:w-64 shrink-0 border-r bg-muted/30 sticky top-0 flex-col min-h-0 self-stretch overflow-hidden">
       <div className="px-4 py-5 border-b">
         <Link href="/dashboard" className="font-bold text-lg tracking-tight">
           YouTube Box
