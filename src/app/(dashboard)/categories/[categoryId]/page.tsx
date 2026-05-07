@@ -5,7 +5,7 @@ import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, categoryChannels } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
-import { CategoryFeed } from "@/components/category-feed"
+import { CategoryPageFeed } from "@/components/category-page-feed"
 import { buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Pencil, ChevronLeft } from "lucide-react"
@@ -34,7 +34,7 @@ export default async function CategoryPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link
             href="/categories"
@@ -66,29 +66,30 @@ export default async function CategoryPage({
         </Link>
       </div>
 
-      {channels.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {channels.map((ch) => (
-            <div
-              key={ch.channelId}
-              className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
-            >
-              {ch.channelThumbnail && (
-                <Image
-                  src={ch.channelThumbnail}
-                  alt={ch.channelName}
-                  width={16}
-                  height={16}
-                  className="rounded-full"
-                />
-              )}
-              {ch.channelName}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {channels.map((ch) => (
+          <div
+            key={ch.channelId}
+            className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+          >
+            {ch.channelThumbnail && (
+              <Image
+                src={ch.channelThumbnail}
+                alt={ch.channelName}
+                width={16}
+                height={16}
+                className="rounded-full"
+              />
+            )}
+            {ch.channelName}
+          </div>
+        ))}
+      </div>
 
-      <CategoryFeed categoryId={categoryId} />
+      <CategoryPageFeed
+        categoryId={categoryId}
+        initialAssignedIds={channels.map((ch) => ch.channelId)}
+      />
     </div>
   )
 }

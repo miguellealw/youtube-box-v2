@@ -30,8 +30,8 @@ export default async function CategoriesPage() {
   }, {})
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-3xl w-full">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Categories</h1>
           <p className="text-muted-foreground text-sm mt-1">

@@ -17,12 +17,20 @@ function VideoSkeleton() {
   )
 }
 
-export function CategoryFeed({ categoryId }: { categoryId: string }) {
+export function CategoryFeed({
+  categoryId,
+  refreshKey = 0,
+}: {
+  categoryId: string
+  refreshKey?: number
+}) {
   const [videos, setVideos] = useState<Video[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setLoading(true)
+    setError(null)
     fetch(`/api/youtube/feed?categoryId=${categoryId}`)
       .then((r) => {
         if (!r.ok) throw new Error("Failed to load")
@@ -31,7 +39,7 @@ export function CategoryFeed({ categoryId }: { categoryId: string }) {
       .then(setVideos)
       .catch(() => setError("Could not load videos. Please try again."))
       .finally(() => setLoading(false))
-  }, [categoryId])
+  }, [categoryId, refreshKey])
 
   if (error) {
     return <p className="text-sm text-destructive">{error}</p>
@@ -51,13 +59,7 @@ export function CategoryFeed({ categoryId }: { categoryId: string }) {
     return (
       <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
         <p>No videos yet.</p>
-        <p className="text-sm mt-1">
-          Add channels to this category from the{" "}
-          <a href="/subscriptions" className="underline hover:text-foreground">
-            Subscriptions
-          </a>{" "}
-          page.
-        </p>
+        <p className="text-sm mt-1">Add channels to this category to see their latest videos.</p>
       </div>
     )
   }

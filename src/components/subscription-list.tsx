@@ -117,7 +117,7 @@ export function SubscriptionList({
         placeholder="Search loaded subscriptions…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
+        className="w-full sm:max-w-sm"
       />
 
       <ul className="space-y-2">

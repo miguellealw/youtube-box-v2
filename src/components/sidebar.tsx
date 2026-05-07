@@ -16,7 +16,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-56 shrink-0 border-r bg-muted/30 min-h-screen flex flex-col">
+    <aside className="hidden md:flex w-56 shrink-0 border-r bg-muted/30 h-screen sticky top-0 flex-col">
       <div className="px-4 py-5 border-b">
         <Link href="/dashboard" className="font-bold text-lg tracking-tight">
           YouTube Box
