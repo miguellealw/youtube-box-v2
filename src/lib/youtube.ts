@@ -64,52 +64,48 @@ interface YTPlaylistItem {
   }
 }
 
-export async function fetchAllSubscriptions(accessToken: string): Promise<Subscription[]> {
-  const subs: Subscription[] = []
-  let pageToken: string | undefined
+export interface SubscriptionPage {
+  items: Subscription[]
+  nextPageToken: string | null
+}
 
-  do {
-    const params: Record<string, string> = {
-      part: "snippet",
-      mine: "true",
-      maxResults: "50",
-    }
-    if (pageToken) params.pageToken = pageToken
+export async function fetchSubscriptionPage(
+  accessToken: string,
+  pageToken?: string
+): Promise<SubscriptionPage> {
+  const params: Record<string, string> = {
+    part: "snippet",
+    mine: "true",
+    maxResults: "50",
+  }
+  if (pageToken) params.pageToken = pageToken
 
-    const data = await ytFetch<{
-      items: YTSubscriptionItem[]
-      nextPageToken?: string
-    }>("/subscriptions", params, accessToken)
+  const data = await ytFetch<{
+    items: YTSubscriptionItem[]
+    nextPageToken?: string
+  }>("/subscriptions", params, accessToken)
 
-    for (const item of data.items ?? []) {
-      subs.push({
-        channelId: item.snippet.resourceId.channelId,
-        channelName: item.snippet.title,
-        channelThumbnail:
-          item.snippet.thumbnails.medium?.url ??
-          item.snippet.thumbnails.default?.url ??
-          "",
-        subscriberCount: "",
-        description: item.snippet.description,
-      })
-    }
+  const subs: Subscription[] = (data.items ?? []).map((item) => ({
+    channelId: item.snippet.resourceId.channelId,
+    channelName: item.snippet.title,
+    channelThumbnail:
+      item.snippet.thumbnails.medium?.url ??
+      item.snippet.thumbnails.default?.url ??
+      "",
+    subscriberCount: "",
+    description: item.snippet.description,
+  }))
 
-    pageToken = data.nextPageToken
-  } while (pageToken)
-
-  if (subs.length === 0) return subs
-
-  // Enrich with subscriber counts in batches of 50
-  const ids = subs.map((s) => s.channelId)
-  for (let i = 0; i < ids.length; i += 50) {
-    const batch = ids.slice(i, i + 50)
-    const data = await ytFetch<{ items: YTChannelItem[] }>(
+  if (subs.length > 0) {
+    // Enrich the page's channels with subscriber counts (all fit in one batch)
+    const ids = subs.map((s) => s.channelId)
+    const enrichData = await ytFetch<{ items: YTChannelItem[] }>(
       "/channels",
-      { part: "snippet,statistics", id: batch.join(",") },
+      { part: "snippet,statistics", id: ids.join(",") },
       accessToken
     )
     const countMap = new Map(
-      (data.items ?? []).map((c) => [
+      (enrichData.items ?? []).map((c) => [
         c.id,
         {
           count: c.statistics.subscriberCount ?? "0",
@@ -128,7 +124,7 @@ export async function fetchAllSubscriptions(accessToken: string): Promise<Subscr
     }
   }
 
-  return subs
+  return { items: subs, nextPageToken: data.nextPageToken ?? null }
 }
 
 export async function fetchUploadsPlaylistId(

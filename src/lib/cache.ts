@@ -23,7 +23,9 @@ export async function invalidate(key: string): Promise<void> {
 }
 
 export const CACHE_KEYS = {
-  subscriptions: (userId: string) => `yt:subs:${userId}`,
+  // per-page: token "first" = first page, otherwise the YouTube pageToken value
+  subscriptionPage: (userId: string, token: string) =>
+    `yt:subs:${userId}:page:${token}`,
   uploadsPlaylist: (channelId: string) => `yt:uploads:${channelId}`,
   feed: (categoryId: string) => `yt:feed:${categoryId}`,
 } as const
