@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Plus, Settings2, Tv, ListMusic } from "lucide-react"
+import { useState } from "react"
+import { LayoutDashboard, Plus, Settings2, Tv, ListMusic, Search } from "lucide-react"
 import { useDroppable } from "@dnd-kit/core"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Input } from "@/components/ui/input"
 
 export type SidebarCategory = {
   id: string
@@ -66,6 +68,10 @@ function CategoryNavRow({ category }: { category: SidebarCategory }) {
 
 export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
   const pathname = usePathname()
+  const [search, setSearch] = useState("")
+  const filteredCategories = categories.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <aside className="hidden md:flex w-60 lg:w-64 shrink-0 flex-col min-h-0 self-stretch overflow-hidden border-r border-border/80 bg-sidebar text-sidebar-foreground shadow-[1px_0_0_0_oklch(0_0_0/0.04)] dark:shadow-[1px_0_0_0_oklch(1_0_0/0.06)]">
@@ -93,10 +99,21 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
         ))}
       </nav>
 
-      <div className="px-4 pt-4 pb-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="px-3 pt-4 pb-2 space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
           Your categories
         </p>
+        {categories.length > 0 && (
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search categories…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 pl-8 text-xs"
+            />
+          </div>
+        )}
       </div>
 
       <ScrollArea className="flex-1 min-h-0 px-2">
@@ -108,8 +125,10 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
                 Create one
               </Link>
             </p>
+          ) : filteredCategories.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-2 py-2">No results.</p>
           ) : (
-            categories.map((c) => <CategoryNavRow key={c.id} category={c} />)
+            filteredCategories.map((c) => <CategoryNavRow key={c.id} category={c} />)
           )}
         </div>
       </ScrollArea>

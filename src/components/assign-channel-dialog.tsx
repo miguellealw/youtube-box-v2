@@ -44,6 +44,7 @@ export function AssignChannelDialog({
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryColor, setNewCategoryColor] = useState<string | undefined>(undefined)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [categorySearch, setCategorySearch] = useState("")
 
   function handleOpenChange(next: boolean) {
     setOpen(next)
@@ -51,6 +52,7 @@ export function AssignChannelDialog({
       setNewCategoryName("")
       setNewCategoryColor(undefined)
       setCreateError(null)
+      setCategorySearch("")
     }
   }
 
@@ -141,37 +143,56 @@ export function AssignChannelDialog({
         </DialogHeader>
 
         {categories.length > 0 ? (
-          <ul className="space-y-1.5 max-h-[min(40vh,16rem)] overflow-y-auto py-1 -mx-1 px-1">
-            {categories.map((cat) => {
-              const isAssigned = assigned.has(cat.id)
-              return (
-                <li key={cat.id}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(cat.id)}
-                    disabled={pending}
-                    className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-50"
-                  >
-                    {cat.color && (
-                      <span
-                        className="h-2.5 w-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                    )}
-                    <span className="flex-1 text-left">{cat.name}</span>
-                    {pending ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    ) : isAssigned ? (
-                      <Check className="h-4 w-4 text-primary" />
-                    ) : null}
-                    {isAssigned && (
-                      <Badge variant="secondary" className="text-xs">added</Badge>
-                    )}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+          <div className="space-y-2">
+            <Input
+              placeholder="Search categories…"
+              value={categorySearch}
+              onChange={(e) => setCategorySearch(e.target.value)}
+            />
+            <ul className="space-y-1.5 max-h-[min(40vh,16rem)] overflow-y-auto py-1 -mx-1 px-1">
+              {categories
+                .filter((cat) =>
+                  cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+                )
+                .map((cat) => {
+                  const isAssigned = assigned.has(cat.id)
+                  return (
+                    <li key={cat.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggle(cat.id)}
+                        disabled={pending}
+                        className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-50"
+                      >
+                        {cat.color && (
+                          <span
+                            className="h-2.5 w-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                        )}
+                        <span className="flex-1 text-left">{cat.name}</span>
+                        {pending ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : isAssigned ? (
+                          <Check className="h-4 w-4 text-primary" />
+                        ) : null}
+                        {isAssigned && (
+                          <Badge variant="secondary" className="text-xs">added</Badge>
+                        )}
+                      </button>
+                    </li>
+                  )
+                })}
+              {categorySearch &&
+                !categories.some((cat) =>
+                  cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+                ) && (
+                  <li className="px-3 py-2 text-sm text-muted-foreground">
+                    No categories match &ldquo;{categorySearch}&rdquo;
+                  </li>
+                )}
+            </ul>
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground py-1">
             No categories yet. Create one below — this channel will be added automatically.
