@@ -214,6 +214,7 @@ export async function fetchRecentVideos(
     channelId: item.snippet.channelId,
     channelName: item.snippet.channelTitle,
     publishedAt: item.snippet.publishedAt,
+    durationSeconds: undefined as number | undefined,
   }))
 
   if (videos.length > 0) {
