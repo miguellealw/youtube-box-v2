@@ -137,7 +137,7 @@ function parseIso8601DurationSeconds(iso: string): number {
   return h * 3600 + minute * 60 + s
 }
 
-/** YouTube Shorts are at most 60s; duration alone is heuristic for long-form vs Short. */
+/** No native Short flag in API; we treat ≤2min as likely short-form and keep longer uploads. */
 async function fetchVideoDurationSecondsMap(
   accessToken: string,
   videoIds: string[]
@@ -207,7 +207,7 @@ export async function fetchRecentVideos(
       accessToken,
       videos.map((v) => v.videoId)
     )
-    const SHORT_MAX_SECONDS = 60
+    const SHORT_MAX_SECONDS = 120 // 2 minutes
     videos = videos.filter((v) => {
       const sec = durations.get(v.videoId)
       if (sec === undefined) return true
