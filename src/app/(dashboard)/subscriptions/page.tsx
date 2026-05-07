@@ -23,7 +23,7 @@ export default async function SubscriptionsPage() {
   }, {})
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl md:max-w-none">
       <div>
         <h1 className="text-2xl font-bold">Subscriptions</h1>
         <p className="text-muted-foreground text-sm mt-1">

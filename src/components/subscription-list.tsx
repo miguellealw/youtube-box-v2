@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import Image from "next/image"
+import { useDraggable } from "@dnd-kit/core"
+import { GripVertical, LayoutGrid, LayoutList } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { AssignChannelDialog } from "@/components/assign-channel-dialog"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 import type { Category } from "@/db/schema"
@@ -16,15 +19,66 @@ function formatSubscriberCount(count: string) {
   return String(n)
 }
 
-function ChannelSkeleton() {
+function useIsDesktopDnD() {
+  const [ok, setOk] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)")
+    const apply = () => setOk(mq.matches)
+    apply()
+    mq.addEventListener("change", apply)
+    return () => mq.removeEventListener("change", apply)
+  }, [])
+  return ok
+}
+
+function DraggableGrip({ subscription }: { subscription: Subscription }) {
+  const isDesktop = useIsDesktopDnD()
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `subscription-${subscription.channelId}`,
+    data: { type: "subscription", subscription },
+    disabled: !isDesktop,
+  })
+
+  return (
+    <button
+      type="button"
+      ref={setNodeRef}
+      className={`hidden md:inline-flex shrink-0 h-9 w-9 items-center justify-center rounded-md border border-transparent text-muted-foreground hover:bg-muted hover:text-foreground cursor-grab active:cursor-grabbing touch-none ${isDragging ? "opacity-50" : ""}`}
+      {...listeners}
+      {...attributes}
+      aria-label={`Drag ${subscription.channelName} to a category in the sidebar`}
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
+  )
+}
+
+const SUBS_LAYOUT_KEY = "youtube-box:subs-layout"
+type SubsLayout = "stacked" | "grid"
+
+function ChannelSkeletonStacked() {
   return (
     <li className="flex items-center gap-3 rounded-lg border p-3">
+      <Skeleton className="hidden md:block h-9 w-9 rounded-md shrink-0" />
       <Skeleton className="h-10 w-10 rounded-full shrink-0" />
       <div className="flex-1 space-y-1.5">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-3 w-20" />
       </div>
       <Skeleton className="h-7 w-20 rounded-md" />
+    </li>
+  )
+}
+
+function ChannelSkeletonGrid() {
+  return (
+    <li className="flex flex-col items-center rounded-lg border p-4 pt-9 gap-3">
+      <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+      <div className="w-full space-y-2 flex flex-col items-center">
+        <Skeleton className="h-4 w-3/4 max-w-[9rem]" />
+        <Skeleton className="h-3 w-12" />
+      </div>
+      <Skeleton className="h-8 w-full max-w-[7rem] rounded-md" />
     </li>
   )
 }
@@ -42,6 +96,7 @@ export function SubscriptionList({
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const [layout, setLayout] = useState<SubsLayout>("stacked")
   const sentinelRef = useRef<HTMLDivElement>(null)
   // Ref to avoid stale closure in the observer callback
   const nextTokenRef = useRef<string | null>(null)
@@ -103,6 +158,24 @@ export function SubscriptionList({
     return () => observer.disconnect()
   }, [loadPage])
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SUBS_LAYOUT_KEY)
+      if (raw === "grid" || raw === "stacked") setLayout(raw)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const setLayoutPersist = useCallback((next: SubsLayout) => {
+    setLayout(next)
+    try {
+      localStorage.setItem(SUBS_LAYOUT_KEY, next)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
   const filtered = items.filter((s) =>
     s.channelName.toLowerCase().includes(search.toLowerCase())
   )
@@ -111,75 +184,170 @@ export function SubscriptionList({
     return <p className="text-sm text-destructive">{error}</p>
   }
 
+  const ChannelSkeletonCmp =
+    layout === "grid" ? ChannelSkeletonGrid : ChannelSkeletonStacked
+  const listClass =
+    layout === "grid"
+      ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+      : "flex flex-col gap-2"
+
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Search loaded subscriptions…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full sm:max-w-sm"
-      />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <Input
+          placeholder="Search loaded subscriptions…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:max-w-sm"
+        />
+        <div
+          className="inline-flex rounded-lg border bg-muted/30 p-0.5 self-start sm:self-auto"
+          role="group"
+          aria-label="Subscription layout"
+        >
+          <Button
+            type="button"
+            size="icon-sm"
+            variant={layout === "stacked" ? "secondary" : "ghost"}
+            className={layout === "stacked" ? "shadow-none" : undefined}
+            onClick={() => setLayoutPersist("stacked")}
+            aria-pressed={layout === "stacked"}
+            aria-label="Stacked list"
+          >
+            <LayoutList className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            size="icon-sm"
+            variant={layout === "grid" ? "secondary" : "ghost"}
+            className={layout === "grid" ? "shadow-none" : undefined}
+            onClick={() => setLayoutPersist("grid")}
+            aria-pressed={layout === "grid"}
+            aria-label="Grid"
+          >
+            <LayoutGrid className="size-4" />
+          </Button>
+        </div>
+      </div>
 
-      <ul className="space-y-2">
+      <p className="hidden md:block text-xs text-muted-foreground">
+        Drag the handle next to a channel onto a category in the sidebar.
+      </p>
+
+      <ul className={listClass}>
         {initialLoading
-          ? Array.from({ length: 8 }).map((_, i) => <ChannelSkeleton key={i} />)
+          ? Array.from({ length: 8 }).map((_, i) => <ChannelSkeletonCmp key={i} />)
           : filtered.length === 0
           ? null
-          : filtered.map((sub) => (
-              <li
-                key={sub.channelId}
-                className="flex items-center gap-3 rounded-lg border p-3"
-              >
-                <a
-                  href={`https://www.youtube.com/channel/${sub.channelId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0"
+          : filtered.map((sub) =>
+              layout === "grid" ? (
+                <li
+                  key={sub.channelId}
+                  className="relative flex flex-col items-center rounded-lg border pt-9 pb-3 px-3 gap-2 text-center"
                 >
-                  {sub.channelThumbnail ? (
-                    <Image
-                      src={sub.channelThumbnail}
-                      alt={sub.channelName}
-                      width={40}
-                      height={40}
-                      className="rounded-full hover:opacity-80 transition-opacity"
+                  <div className="absolute top-2 left-2 z-10">
+                    <DraggableGrip subscription={sub} />
+                  </div>
+                  <div className="absolute top-2 right-2 z-10">
+                    <AssignChannelDialog
+                      subscription={sub}
+                      categories={categories}
+                      assignedCategoryIds={assignedMap[sub.channelId] ?? []}
                     />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-muted" />
-                  )}
-                </a>
-                <div className="flex-1 min-w-0">
+                  </div>
                   <a
                     href={`https://www.youtube.com/channel/${sub.channelId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-sm truncate hover:underline block"
+                    className="shrink-0"
                   >
-                    {sub.channelName}
+                    {sub.channelThumbnail ? (
+                      <Image
+                        src={sub.channelThumbnail}
+                        alt={sub.channelName}
+                        width={56}
+                        height={56}
+                        className="rounded-full hover:opacity-80 transition-opacity"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-full bg-muted" />
+                    )}
                   </a>
-                  {sub.subscriberCount && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatSubscriberCount(sub.subscriberCount)} subscribers
-                    </p>
-                  )}
-                </div>
-                <AssignChannelDialog
-                  subscription={sub}
-                  categories={categories}
-                  assignedCategoryIds={assignedMap[sub.channelId] ?? []}
-                />
-              </li>
-            ))}
+                  <div className="min-w-0 w-full">
+                    <a
+                      href={`https://www.youtube.com/channel/${sub.channelId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-sm line-clamp-2 hover:underline"
+                    >
+                      {sub.channelName}
+                    </a>
+                    {sub.subscriberCount && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatSubscriberCount(sub.subscriberCount)} subs
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ) : (
+                <li
+                  key={sub.channelId}
+                  className="flex items-center gap-3 rounded-lg border p-3"
+                >
+                  <DraggableGrip subscription={sub} />
+                  <a
+                    href={`https://www.youtube.com/channel/${sub.channelId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0"
+                  >
+                    {sub.channelThumbnail ? (
+                      <Image
+                        src={sub.channelThumbnail}
+                        alt={sub.channelName}
+                        width={40}
+                        height={40}
+                        className="rounded-full hover:opacity-80 transition-opacity"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-muted" />
+                    )}
+                  </a>
+                  <div className="flex-1 min-w-0">
+                    <a
+                      href={`https://www.youtube.com/channel/${sub.channelId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-sm truncate hover:underline block"
+                    >
+                      {sub.channelName}
+                    </a>
+                    {sub.subscriberCount && (
+                      <p className="text-xs text-muted-foreground">
+                        {formatSubscriberCount(sub.subscriberCount)} subscribers
+                      </p>
+                    )}
+                  </div>
+                  <AssignChannelDialog
+                    subscription={sub}
+                    categories={categories}
+                    assignedCategoryIds={assignedMap[sub.channelId] ?? []}
+                  />
+                </li>
+              )
+            )}
 
         {!initialLoading && search === "" && filtered.length === 0 && (
-          <li className="text-sm text-muted-foreground py-4 text-center">
+          <li className="text-sm text-muted-foreground py-4 text-center col-span-full">
             No subscriptions found.
           </li>
         )}
 
         {/* Loading skeletons for next page */}
         {loadingMore &&
-          Array.from({ length: 4 }).map((_, i) => <ChannelSkeleton key={`more-${i}`} />)}
+          Array.from({ length: 4 }).map((_, i) => (
+            <ChannelSkeletonCmp key={`more-${i}`} />
+          ))}
       </ul>
 
       {/* Sentinel — observed to trigger next-page load */}
