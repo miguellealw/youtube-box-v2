@@ -8,6 +8,13 @@
       "when": 1778118380482,
       "tag": "0000_common_scream",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1746662400000,
+      "tag": "0001_rename_color_to_emoji",
+      "breakpoints": true
     }
   ]
 }

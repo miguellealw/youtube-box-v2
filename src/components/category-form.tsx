@@ -1,15 +1,12 @@
 "use client"
 
-import { useActionState } from "react"
+import { useState, useActionState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
+import { PRESET_EMOJIS, getEmojiForCategory } from "@/lib/emoji"
 import type { Category } from "@/db/schema"
-
-const PRESET_COLORS = [
-  "#ef4444", "#f97316", "#eab308", "#22c55e",
-  "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899",
-]
 
 type ActionResult = { success: false; error: string } | undefined
 type ActionFn = (prevState: ActionResult, formData: FormData) => Promise<ActionResult>
@@ -24,6 +21,9 @@ export function CategoryForm({
   submitLabel: string
 }) {
   const [state, formAction, pending] = useActionState(action, undefined)
+  const [selectedEmoji, setSelectedEmoji] = useState<string>(
+    category?.emoji ?? getEmojiForCategory(category?.name ?? "") ?? "📁"
+  )
 
   return (
     <form action={formAction} className="space-y-5 max-w-md">
@@ -36,6 +36,9 @@ export function CategoryForm({
           placeholder="e.g. Gaming"
           required
           maxLength={50}
+          onChange={(e) => {
+            if (!category) setSelectedEmoji(getEmojiForCategory(e.target.value) ?? "📁")
+          }}
         />
       </div>
 
@@ -51,36 +54,26 @@ export function CategoryForm({
       </div>
 
       <div className="space-y-2">
-        <Label>Color (optional)</Label>
-        <div className="flex gap-2 flex-wrap">
-          {PRESET_COLORS.map((c) => (
-            <label key={c} className="cursor-pointer">
-              <input
-                type="radio"
-                name="color"
-                value={c}
-                defaultChecked={category?.color === c}
-                className="sr-only peer"
-              />
-              <span
-                className="block h-7 w-7 rounded-full ring-2 ring-transparent peer-checked:ring-foreground transition-all"
-                style={{ backgroundColor: c }}
-              />
-            </label>
+        <Label>Emoji</Label>
+        <input type="hidden" name="emoji" value={selectedEmoji} />
+        <div className="flex gap-1 flex-wrap">
+          {PRESET_EMOJIS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => setSelectedEmoji(e)}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-md text-lg transition-colors hover:bg-muted",
+                selectedEmoji === e && "ring-2 ring-foreground bg-muted"
+              )}
+            >
+              {e}
+            </button>
           ))}
-          <label className="cursor-pointer">
-            <input
-              type="radio"
-              name="color"
-              value=""
-              defaultChecked={!category?.color}
-              className="sr-only peer"
-            />
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs text-muted-foreground peer-checked:border-foreground transition-all">
-              ✕
-            </span>
-          </label>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Selected: <span className="text-base">{selectedEmoji}</span>
+        </p>
       </div>
 
       {state && !state.success && (

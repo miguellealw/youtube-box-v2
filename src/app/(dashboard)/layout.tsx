@@ -20,7 +20,7 @@ export default async function DashboardLayout({
     .select({
       id: categories.id,
       name: categories.name,
-      color: categories.color,
+      emoji: categories.emoji,
     })
     .from(categories)
     .where(eq(categories.userId, userId))

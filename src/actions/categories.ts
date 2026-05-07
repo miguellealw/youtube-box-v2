@@ -7,22 +7,17 @@ import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, type Category } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
+import { getEmojiForCategory } from "@/lib/emoji"
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name is too long"),
   description: z.string().max(200, "Description is too long").optional(),
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color")
-    .optional(),
+  emoji: z.string().max(10).optional(),
 })
 
 const quickCreateSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name is too long"),
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color")
-    .optional(),
+  emoji: z.string().max(10).optional(),
 })
 
 async function requireAuth() {
@@ -37,7 +32,7 @@ export async function createCategory(_prevState: unknown, formData: FormData) {
   const parsed = categorySchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
-    color: formData.get("color") || undefined,
+    emoji: formData.get("emoji") || undefined,
   })
 
   if (!parsed.success) {
@@ -49,7 +44,7 @@ export async function createCategory(_prevState: unknown, formData: FormData) {
       userId,
       name: parsed.data.name,
       description: parsed.data.description ?? null,
-      color: parsed.data.color ?? null,
+      emoji: parsed.data.emoji ?? getEmojiForCategory(parsed.data.name),
     })
   } catch (err: unknown) {
     if (err instanceof Error && err.message.includes("unique")) {
@@ -66,13 +61,13 @@ export async function createCategory(_prevState: unknown, formData: FormData) {
 
 export async function createCategoryQuick(input: {
   name: string
-  color?: string
+  emoji?: string
 }): Promise<{ success: true; category: Category } | { success: false; error: string }> {
   const userId = await requireAuth()
 
   const parsed = quickCreateSchema.safeParse({
     name: input.name.trim(),
-    color: input.color?.trim() || undefined,
+    emoji: input.emoji?.trim() || undefined,
   })
 
   if (!parsed.success) {
@@ -86,7 +81,7 @@ export async function createCategoryQuick(input: {
         userId,
         name: parsed.data.name,
         description: null,
-        color: parsed.data.color ?? null,
+        emoji: parsed.data.emoji ?? getEmojiForCategory(parsed.data.name),
       })
       .returning()
 
@@ -109,7 +104,7 @@ export async function updateCategory(categoryId: string, _prevState: unknown, fo
   const parsed = categorySchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
-    color: formData.get("color") || undefined,
+    emoji: formData.get("emoji") || undefined,
   })
 
   if (!parsed.success) {
@@ -121,7 +116,7 @@ export async function updateCategory(categoryId: string, _prevState: unknown, fo
     .set({
       name: parsed.data.name,
       description: parsed.data.description ?? null,
-      color: parsed.data.color ?? null,
+      emoji: parsed.data.emoji ?? null,
       updatedAt: new Date(),
     })
     .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))

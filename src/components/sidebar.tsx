@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { LayoutDashboard, Plus, Settings2, Tv, ListMusic, Search } from "lucide-react"
+import { LayoutDashboard, Plus, Settings2, Tv, Search } from "lucide-react"
 import { useDroppable } from "@dnd-kit/core"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 export type SidebarCategory = {
   id: string
   name: string
-  color: string | null
+  emoji: string | null
 }
 
 const primaryNav = [
@@ -52,14 +52,7 @@ function CategoryNavRow({ category }: { category: SidebarCategory }) {
             : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
         )}
       >
-        {category.color ? (
-          <span
-            className="h-2.5 w-2.5 rounded-full shrink-0 ring-1 ring-border"
-            style={{ backgroundColor: category.color }}
-          />
-        ) : (
-          <ListMusic className="h-4 w-4 shrink-0 opacity-70" />
-        )}
+        <span className="text-sm leading-none shrink-0">{category.emoji ?? "📁"}</span>
         <span className="truncate">{category.name}</span>
       </Link>
     </div>
