@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, categoryChannels } from "@/db/schema"
@@ -66,29 +65,10 @@ export default async function CategoryPage({
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {channels.map((ch) => (
-          <div
-            key={ch.channelId}
-            className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
-          >
-            {ch.channelThumbnail && (
-              <Image
-                src={ch.channelThumbnail}
-                alt={ch.channelName}
-                width={16}
-                height={16}
-                className="rounded-full"
-              />
-            )}
-            {ch.channelName}
-          </div>
-        ))}
-      </div>
-
       <CategoryPageFeed
         categoryId={categoryId}
         initialAssignedIds={channels.map((ch) => ch.channelId)}
+        channels={channels}
       />
     </div>
   )

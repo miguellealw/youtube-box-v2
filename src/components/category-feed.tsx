@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { VideoCard } from "@/components/video-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Video } from "@/lib/youtube"
@@ -20,9 +20,12 @@ function VideoSkeleton() {
 export function CategoryFeed({
   categoryId,
   refreshKey = 0,
+  activeChannelIds = null,
 }: {
   categoryId: string
   refreshKey?: number
+  /** When non-null, only videos from these channels are shown */
+  activeChannelIds?: string[] | null
 }) {
   const [videos, setVideos] = useState<Video[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +44,12 @@ export function CategoryFeed({
       .finally(() => setLoading(false))
   }, [categoryId, refreshKey])
 
+  const visibleVideos = useMemo(() => {
+    if (!activeChannelIds?.length) return videos
+    const set = new Set(activeChannelIds)
+    return videos.filter((v) => set.has(v.channelId))
+  }, [videos, activeChannelIds])
+
   if (error) {
     return <p className="text-sm text-destructive">{error}</p>
   }
@@ -51,6 +60,15 @@ export function CategoryFeed({
         {Array.from({ length: 6 }).map((_, i) => (
           <VideoSkeleton key={i} />
         ))}
+      </div>
+    )
+  }
+
+  if (visibleVideos.length === 0 && videos.length > 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
+        <p>No videos from the selected channels.</p>
+        <p className="text-sm mt-1">Choose another channel or click again to include more.</p>
       </div>
     )
   }
@@ -66,7 +84,7 @@ export function CategoryFeed({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {videos.map((video) => (
+      {visibleVideos.map((video) => (
         <VideoCard key={video.videoId} video={video} />
       ))}
     </div>
