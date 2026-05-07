@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "@/components/ui/sonner"
@@ -19,6 +19,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "YouTube Box",
   description: "Organize your YouTube subscriptions into custom categories",
+}
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
 }
 
 export default function RootLayout({
