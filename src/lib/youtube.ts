@@ -127,6 +127,35 @@ export async function fetchSubscriptionPage(
   return { items: subs, nextPageToken: data.nextPageToken ?? null }
 }
 
+/** Parses YouTube/API ISO 8601 duration (PT1H2M3S). */
+function parseIso8601DurationSeconds(iso: string): number {
+  const m = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i.exec(iso)
+  if (!m) return 0
+  const h = parseInt(m[1] ?? "0", 10)
+  const minute = parseInt(m[2] ?? "0", 10)
+  const s = parseInt(m[3] ?? "0", 10)
+  return h * 3600 + minute * 60 + s
+}
+
+/** YouTube Shorts are at most 60s; duration alone is heuristic for long-form vs Short. */
+async function fetchVideoDurationSecondsMap(
+  accessToken: string,
+  videoIds: string[]
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>()
+  const unique = [...new Set(videoIds)]
+  for (let i = 0; i < unique.length; i += 50) {
+    const batch = unique.slice(i, i + 50)
+    const data = await ytFetch<{
+      items?: { id: string; contentDetails: { duration: string } }[]
+    }>("/videos", { part: "contentDetails", id: batch.join(",") }, accessToken)
+    for (const item of data.items ?? []) {
+      map.set(item.id, parseIso8601DurationSeconds(item.contentDetails.duration))
+    }
+  }
+  return map
+}
+
 export async function fetchUploadsPlaylistId(
   accessToken: string,
   channelId: string
@@ -144,19 +173,24 @@ export async function fetchUploadsPlaylistId(
 export async function fetchRecentVideos(
   accessToken: string,
   uploadsPlaylistId: string,
-  maxResults = 5
+  maxResults = 5,
+  options?: { excludeShorts?: boolean }
 ): Promise<Video[]> {
+  const excludeShorts = options?.excludeShorts === true
+  const playlistPageSize =
+    excludeShorts ? Math.min(50, Math.max(maxResults * 15, 20)) : maxResults
+
   const data = await ytFetch<{ items: YTPlaylistItem[] }>(
     "/playlistItems",
     {
       part: "snippet",
       playlistId: uploadsPlaylistId,
-      maxResults: String(maxResults),
+      maxResults: String(playlistPageSize),
     },
     accessToken
   )
 
-  return (data.items ?? []).map((item) => ({
+  let videos = (data.items ?? []).map((item) => ({
     videoId: item.snippet.resourceId.videoId,
     title: item.snippet.title,
     thumbnail:
@@ -167,4 +201,19 @@ export async function fetchRecentVideos(
     channelName: item.snippet.channelTitle,
     publishedAt: item.snippet.publishedAt,
   }))
+
+  if (excludeShorts && videos.length > 0) {
+    const durations = await fetchVideoDurationSecondsMap(
+      accessToken,
+      videos.map((v) => v.videoId)
+    )
+    const SHORT_MAX_SECONDS = 60
+    videos = videos.filter((v) => {
+      const sec = durations.get(v.videoId)
+      if (sec === undefined) return true
+      return sec > SHORT_MAX_SECONDS
+    })
+  }
+
+  return videos.slice(0, maxResults)
 }

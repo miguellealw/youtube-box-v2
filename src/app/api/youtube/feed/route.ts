@@ -53,7 +53,9 @@ export async function GET(request: NextRequest) {
               CACHE_TTL.uploadsPlaylist,
               () => fetchUploadsPlaylistId(accessToken, ch.channelId)
             )
-            const videos = await fetchRecentVideos(accessToken, uploadsId, 5)
+            const videos = await fetchRecentVideos(accessToken, uploadsId, 5, {
+              excludeShorts: true,
+            })
             allVideos.push(...videos)
           })
         )
