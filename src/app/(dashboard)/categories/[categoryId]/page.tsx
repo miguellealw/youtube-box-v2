@@ -43,12 +43,7 @@ export default async function CategoryPage({
             All categories
           </Link>
           <div className="flex items-center gap-3">
-            {category.color && (
-              <span
-                className="h-4 w-4 rounded-full shrink-0"
-                style={{ backgroundColor: category.color }}
-              />
-            )}
+            <span className="text-2xl leading-none shrink-0">{category.emoji ?? "📁"}</span>
             <h1 className="text-2xl font-bold">{category.name}</h1>
             <Badge variant="secondary">{channels.length} channels</Badge>
           </div>

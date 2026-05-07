@@ -18,12 +18,7 @@ export function CategoryCard({
       <Card className="h-full cursor-pointer transition-all hover:shadow-md hover:border-border hover:ring-1 hover:ring-primary/8">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
-            {category.color && (
-              <span
-                className="h-3 w-3 rounded-full shrink-0"
-                style={{ backgroundColor: category.color }}
-              />
-            )}
+            <span className="text-xl leading-none shrink-0">{category.emoji ?? "📁"}</span>
             <CardTitle className="text-base">{category.name}</CardTitle>
           </div>
           {category.description && (

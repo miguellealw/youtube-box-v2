@@ -58,12 +58,7 @@ export default async function CategoriesPage() {
               key={category.id}
               className="flex items-center gap-4 rounded-lg border p-4"
             >
-              {category.color && (
-                <span
-                  className="h-3 w-3 rounded-full shrink-0"
-                  style={{ backgroundColor: category.color }}
-                />
-              )}
+              <span className="text-lg leading-none shrink-0">{category.emoji ?? "📁"}</span>
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/categories/${category.id}`}

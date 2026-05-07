@@ -20,11 +20,6 @@ import type { Subscription } from "@/lib/youtube"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-const PRESET_COLORS = [
-  "#ef4444", "#f97316", "#eab308", "#22c55e",
-  "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899",
-]
-
 export function AssignChannelDialog({
   subscription,
   categories,
@@ -42,7 +37,6 @@ export function AssignChannelDialog({
   const [assigned, setAssigned] = useState(new Set(assignedCategoryIds))
   const [pending, startTransition] = useTransition()
   const [newCategoryName, setNewCategoryName] = useState("")
-  const [newCategoryColor, setNewCategoryColor] = useState<string | undefined>(undefined)
   const [createError, setCreateError] = useState<string | null>(null)
   const [categorySearch, setCategorySearch] = useState("")
 
@@ -50,7 +44,6 @@ export function AssignChannelDialog({
     setOpen(next)
     if (!next) {
       setNewCategoryName("")
-      setNewCategoryColor(undefined)
       setCreateError(null)
       setCategorySearch("")
     }
@@ -89,10 +82,7 @@ export function AssignChannelDialog({
     setCreateError(null)
     startTransition(async () => {
       try {
-        const created = await createCategoryQuick({
-          name,
-          color: newCategoryColor,
-        })
+        const created = await createCategoryQuick({ name })
         if (!created.success) {
           setCreateError(created.error)
           return
@@ -110,7 +100,6 @@ export function AssignChannelDialog({
         }
         setAssigned((prev) => new Set([...prev, created.category.id]))
         setNewCategoryName("")
-        setNewCategoryColor(undefined)
         toast.success(`Created "${created.category.name}" and added this channel`)
         router.refresh()
       } catch {
@@ -164,12 +153,7 @@ export function AssignChannelDialog({
                         disabled={pending}
                         className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-50"
                       >
-                        {cat.color && (
-                          <span
-                            className="h-2.5 w-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                        )}
+                        <span className="text-base leading-none shrink-0">{cat.emoji ?? "📁"}</span>
                         <span className="flex-1 text-left">{cat.name}</span>
                         {pending ? (
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -231,37 +215,6 @@ export function AssignChannelDialog({
                 "Create & add"
               )}
             </Button>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Color (optional)</p>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => setNewCategoryColor(undefined)}
-                className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-full border text-[10px] text-muted-foreground transition-colors hover:bg-muted",
-                  newCategoryColor === undefined && "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                )}
-                title="No color"
-              >
-                —
-              </button>
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  disabled={pending}
-                  onClick={() => setNewCategoryColor(c)}
-                  className={cn(
-                    "h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-background transition-transform hover:scale-105",
-                    newCategoryColor === c ? "ring-foreground" : "ring-transparent"
-                  )}
-                  style={{ backgroundColor: c }}
-                  title={c}
-                />
-              ))}
-            </div>
           </div>
           {createError && (
             <p className="text-sm text-destructive">{createError}</p>
