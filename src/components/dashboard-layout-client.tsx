@@ -114,9 +114,10 @@ export function DashboardLayoutClient({
         <Sidebar categories={categories} />
         <div className="flex min-h-0 flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain bg-muted/25">
           {header}
-          <main className="relative flex-1 min-h-0 p-4 md:p-7 pb-[calc(6.75rem+env(safe-area-inset-bottom,0px))] md:pb-7">
+          <main className="relative flex-1 min-h-0 px-4 pt-4 md:px-7 md:pt-7 md:pb-7">
             {children}
           </main>
+          <div className="h-24 shrink-0 md:hidden" aria-hidden="true" />
         </div>
       </div>
       <MobileNav />
