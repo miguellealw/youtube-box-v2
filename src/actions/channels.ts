@@ -50,6 +50,7 @@ export async function assignChannel(
   await invalidate(CACHE_KEYS.feed(categoryId))
   revalidatePath("/categories")
   revalidatePath("/dashboard")
+  revalidatePath("/subscriptions")
 
   return { success: true }
 }
@@ -70,6 +71,7 @@ export async function removeChannel(channelId: string, categoryId: string) {
   await invalidate(CACHE_KEYS.feed(categoryId))
   revalidatePath("/categories")
   revalidatePath("/dashboard")
+  revalidatePath("/subscriptions")
 
   return { success: true }
 }

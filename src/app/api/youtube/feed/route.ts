@@ -8,6 +8,22 @@ import { fetchUploadsPlaylistId, fetchRecentVideos } from "@/lib/youtube"
 import { cached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache"
 import type { Video } from "@/lib/youtube"
 
+/** Long-form candidates per channel before merge (single playlist page maxes at 50 items). */
+const CANDIDATES_PER_CHANNEL = 20
+/** Total videos returned after global sort by upload time. */
+const MAX_FEED_VIDEOS = 50
+
+function publishedTimestamp(iso: string): number {
+  const t = new Date(iso).getTime()
+  return Number.isFinite(t) ? t : 0
+}
+
+function compareByUploadTime(a: Video, b: Video): number {
+  const dt = publishedTimestamp(b.publishedAt) - publishedTimestamp(a.publishedAt)
+  if (dt !== 0) return dt
+  return a.videoId.localeCompare(b.videoId)
+}
+
 export async function GET(request: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -53,17 +69,20 @@ export async function GET(request: NextRequest) {
               CACHE_TTL.uploadsPlaylist,
               () => fetchUploadsPlaylistId(accessToken, ch.channelId)
             )
-            const videos = await fetchRecentVideos(accessToken, uploadsId, 5, {
-              excludeShorts: true,
-            })
+            const videos = await fetchRecentVideos(
+              accessToken,
+              uploadsId,
+              CANDIDATES_PER_CHANNEL,
+              {
+                excludeShorts: true,
+              }
+            )
             allVideos.push(...videos)
           })
         )
 
-        return allVideos.sort(
-          (a, b) =>
-            new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        )
+        allVideos.sort(compareByUploadTime)
+        return allVideos.slice(0, MAX_FEED_VIDEOS)
       }
     )
 

@@ -27,7 +27,8 @@ export const CACHE_KEYS = {
   subscriptionPage: (userId: string, token: string) =>
     `yt:subs:${userId}:page:${token}`,
   uploadsPlaylist: (channelId: string) => `yt:uploads:${channelId}`,
-  feed: (categoryId: string) => `yt:feed:${categoryId}`,
+  /** bump version when feed merge/sort semantics change (invalidates stale cache) */
+  feed: (categoryId: string) => `yt:feed:v2:${categoryId}`,
 } as const
 
 export const CACHE_TTL = {

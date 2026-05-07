@@ -5,12 +5,20 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { categories } from "@/db/schema"
+import { categories, type Category } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name is too long"),
   description: z.string().max(200, "Description is too long").optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color")
+    .optional(),
+})
+
+const quickCreateSchema = z.object({
+  name: z.string().min(1, "Name is required").max(50, "Name is too long"),
   color: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color")
@@ -52,7 +60,47 @@ export async function createCategory(_prevState: unknown, formData: FormData) {
 
   revalidatePath("/categories")
   revalidatePath("/dashboard")
+  revalidatePath("/subscriptions")
   redirect("/categories")
+}
+
+export async function createCategoryQuick(input: {
+  name: string
+  color?: string
+}): Promise<{ success: true; category: Category } | { success: false; error: string }> {
+  const userId = await requireAuth()
+
+  const parsed = quickCreateSchema.safeParse({
+    name: input.name.trim(),
+    color: input.color?.trim() || undefined,
+  })
+
+  if (!parsed.success) {
+    return { success: false as const, error: parsed.error.issues[0].message }
+  }
+
+  try {
+    const [category] = await db
+      .insert(categories)
+      .values({
+        userId,
+        name: parsed.data.name,
+        description: null,
+        color: parsed.data.color ?? null,
+      })
+      .returning()
+
+    revalidatePath("/categories")
+    revalidatePath("/dashboard")
+    revalidatePath("/subscriptions")
+
+    return { success: true as const, category }
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes("unique")) {
+      return { success: false as const, error: "A category with that name already exists" }
+    }
+    return { success: false as const, error: "Failed to create category" }
+  }
 }
 
 export async function updateCategory(categoryId: string, _prevState: unknown, formData: FormData) {
