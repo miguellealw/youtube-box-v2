@@ -1,6 +1,14 @@
 import Image from "next/image"
 import type { Video } from "@/lib/youtube"
 
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+  return `${m}:${String(s).padStart(2, "0")}`
+}
+
 function formatRelativeTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60_000)
@@ -33,6 +41,11 @@ export function VideoCard({ video }: { video: Video }) {
           />
         ) : (
           <div className="absolute inset-0 bg-muted" />
+        )}
+        {video.durationSeconds !== undefined && (
+          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1 py-0.5 text-[11px] font-medium leading-none text-white tabular-nums">
+            {formatDuration(video.durationSeconds)}
+          </span>
         )}
       </div>
       <div className="px-3 pb-3 pt-0.5 space-y-1">

@@ -36,6 +36,7 @@ export interface Video {
   channelId: string
   channelName: string
   publishedAt: string
+  durationSeconds?: number
 }
 
 async function ytFetch<T>(
@@ -215,17 +216,19 @@ export async function fetchRecentVideos(
     publishedAt: item.snippet.publishedAt,
   }))
 
-  if (excludeShorts && videos.length > 0) {
+  if (videos.length > 0) {
     const durations = await fetchVideoDurationSecondsMap(
       accessToken,
       videos.map((v) => v.videoId)
     )
-    const SHORT_MAX_SECONDS = 120 // 2 minutes
-    videos = videos.filter((v) => {
+    for (const v of videos) {
       const sec = durations.get(v.videoId)
-      if (sec === undefined) return true
-      return sec > SHORT_MAX_SECONDS
-    })
+      if (sec !== undefined) v.durationSeconds = sec
+    }
+    if (excludeShorts) {
+      const SHORT_MAX_SECONDS = 120
+      videos = videos.filter((v) => (v.durationSeconds ?? Infinity) > SHORT_MAX_SECONDS)
+    }
   }
 
   return videos.slice(0, maxResults)
