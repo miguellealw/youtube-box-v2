@@ -37,17 +37,17 @@ function CategoryNavRow({ category }: { category: SidebarCategory }) {
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-md transition-colors",
-        isOver && "bg-primary/15 ring-2 ring-primary ring-inset"
+        "rounded-lg transition-colors",
+        isOver && "bg-primary/12 ring-2 ring-primary/40 ring-inset"
       )}
     >
       <Link
         href={href}
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           active
-            ? "text-foreground"
-            : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            ? "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border/80"
+            : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
         )}
       >
         {category.color ? (
@@ -68,26 +68,26 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:flex w-60 lg:w-64 shrink-0 border-r bg-muted/30 sticky top-0 flex-col min-h-0 self-stretch overflow-hidden">
-      <div className="px-4 py-5 border-b">
-        <Link href="/dashboard" className="font-bold text-lg tracking-tight">
+    <aside className="hidden md:flex w-60 lg:w-64 shrink-0 flex-col min-h-0 self-stretch overflow-hidden border-r border-border/80 bg-sidebar text-sidebar-foreground shadow-[1px_0_0_0_oklch(0_0_0/0.04)] dark:shadow-[1px_0_0_0_oklch(1_0_0/0.06)]">
+      <div className="px-4 py-5 border-b border-sidebar-border">
+        <Link href="/dashboard" className="font-semibold text-lg tracking-tight">
           YouTube Box
         </Link>
       </div>
 
-      <nav className="px-2 py-3 space-y-1 border-b">
+      <nav className="px-2 py-3 space-y-0.5 border-b border-sidebar-border">
         {primaryNav.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               pathname === href || pathname.startsWith(href + "/")
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm ring-1 ring-sidebar-border/80"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
             )}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4 opacity-90" />
             {label}
           </Link>
         ))}
@@ -114,29 +114,29 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
         </div>
       </ScrollArea>
 
-      <div className="border-t px-2 py-3 space-y-1">
+      <div className="border-t border-sidebar-border px-2 py-3 space-y-0.5">
         <Link
           href="/categories"
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             pathname === "/categories"
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border/80"
+              : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
           )}
         >
-          <Settings2 className="h-4 w-4" />
+          <Settings2 className="h-4 w-4 opacity-90" />
           Manage categories
         </Link>
         <Link
           href="/categories/new"
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             pathname === "/categories/new"
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border/80"
+              : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
           )}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 opacity-90" />
           New category
         </Link>
         <div className="flex items-center px-3 pt-1">

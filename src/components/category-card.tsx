@@ -15,7 +15,7 @@ export function CategoryCard({
 
   return (
     <Link href={`/categories/${category.id}`}>
-      <Card className="hover:shadow-md transition-shadow h-full cursor-pointer">
+      <Card className="h-full cursor-pointer transition-all hover:shadow-md hover:border-border hover:ring-1 hover:ring-primary/8">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             {category.color && (

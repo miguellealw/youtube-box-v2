@@ -1,5 +1,26 @@
 const YT_API = "https://www.googleapis.com/youtube/v3"
 
+/** YouTube snippet.thumbnails keys; pick the largest URL that exists. */
+type YTThumbnailSet = Partial<
+  Record<"maxres" | "standard" | "high" | "medium" | "default", { url?: string }>
+>
+
+function pickBestThumbnailUrl(thumbnails?: YTThumbnailSet | null): string {
+  if (!thumbnails) return ""
+  const order = [
+    "maxres",
+    "standard",
+    "high",
+    "medium",
+    "default",
+  ] as const
+  for (const key of order) {
+    const url = thumbnails[key]?.url
+    if (url) return url
+  }
+  return ""
+}
+
 export interface Subscription {
   channelId: string
   channelName: string
@@ -41,14 +62,14 @@ interface YTSubscriptionItem {
   snippet: {
     resourceId: { channelId: string }
     title: string
-    thumbnails: { default?: { url: string }; medium?: { url: string } }
+    thumbnails: YTThumbnailSet
     description: string
   }
 }
 
 interface YTChannelItem {
   id: string
-  snippet: { thumbnails: { medium?: { url: string }; default?: { url: string } } }
+  snippet: { thumbnails: YTThumbnailSet }
   statistics: { subscriberCount?: string }
   contentDetails?: { relatedPlaylists: { uploads: string } }
 }
@@ -57,7 +78,7 @@ interface YTPlaylistItem {
   snippet: {
     resourceId: { videoId: string }
     title: string
-    thumbnails: { medium?: { url: string }; default?: { url: string } }
+    thumbnails: YTThumbnailSet
     channelId: string
     channelTitle: string
     publishedAt: string
@@ -88,10 +109,7 @@ export async function fetchSubscriptionPage(
   const subs: Subscription[] = (data.items ?? []).map((item) => ({
     channelId: item.snippet.resourceId.channelId,
     channelName: item.snippet.title,
-    channelThumbnail:
-      item.snippet.thumbnails.medium?.url ??
-      item.snippet.thumbnails.default?.url ??
-      "",
+    channelThumbnail: pickBestThumbnailUrl(item.snippet.thumbnails),
     subscriberCount: "",
     description: item.snippet.description,
   }))
@@ -109,9 +127,7 @@ export async function fetchSubscriptionPage(
         c.id,
         {
           count: c.statistics.subscriberCount ?? "0",
-          thumbnail:
-            c.snippet.thumbnails.medium?.url ??
-            c.snippet.thumbnails.default?.url,
+          thumbnail: pickBestThumbnailUrl(c.snippet.thumbnails) || undefined,
         },
       ])
     )
@@ -193,10 +209,7 @@ export async function fetchRecentVideos(
   let videos = (data.items ?? []).map((item) => ({
     videoId: item.snippet.resourceId.videoId,
     title: item.snippet.title,
-    thumbnail:
-      item.snippet.thumbnails.medium?.url ??
-      item.snippet.thumbnails.default?.url ??
-      "",
+    thumbnail: pickBestThumbnailUrl(item.snippet.thumbnails),
     channelId: item.snippet.channelId,
     channelName: item.snippet.channelTitle,
     publishedAt: item.snippet.publishedAt,

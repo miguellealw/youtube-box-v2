@@ -27,8 +27,11 @@ export default async function DashboardLayout({
     .orderBy(categories.name)
 
   const header = (
-    <header className="flex items-center gap-3 px-4 md:px-6 py-3 border-b">
-      <Link href="/dashboard" className="font-bold text-base tracking-tight md:hidden mr-auto">
+    <header className="sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-border/80 bg-background/80 px-4 py-3 backdrop-blur-md md:px-6 supports-[backdrop-filter]:bg-background/70">
+      <Link
+        href="/dashboard"
+        className="font-semibold text-base tracking-tight md:hidden mr-auto"
+      >
         YouTube Box
       </Link>
       <span className="text-sm text-muted-foreground hidden sm:block ml-auto truncate max-w-[180px]">

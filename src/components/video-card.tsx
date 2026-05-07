@@ -20,7 +20,7 @@ export function VideoCard({ video }: { video: Video }) {
       href={`https://www.youtube.com/watch?v=${video.videoId}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col gap-2 rounded-lg overflow-hidden border hover:shadow-md transition-shadow"
+      className="group flex flex-col gap-2 overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm ring-foreground/5 ring-1 transition-all hover:border-border hover:shadow-md hover:ring-primary/10"
     >
       <div className="relative aspect-video bg-muted overflow-hidden">
         {video.thumbnail ? (
@@ -35,7 +35,7 @@ export function VideoCard({ video }: { video: Video }) {
           <div className="absolute inset-0 bg-muted" />
         )}
       </div>
-      <div className="px-3 pb-3 space-y-1">
+      <div className="px-3 pb-3 pt-0.5 space-y-1">
         <p className="text-sm font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors">
           {video.title}
         </p>

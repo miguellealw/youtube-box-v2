@@ -28,8 +28,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1.5 max-w-prose">
             Your subscription categories at a glance.
           </p>
         </div>
@@ -40,7 +42,7 @@ export default async function DashboardPage() {
       </div>
 
       {userCategories.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground space-y-3">
+        <div className="rounded-xl border border-dashed border-border/80 bg-card/40 p-10 md:p-12 text-center text-muted-foreground space-y-3">
           <p className="text-base">No categories yet.</p>
           <p className="text-sm">
             Create a category, then add channels from your{" "}
@@ -54,7 +56,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
           {userCategories.map((cat) => (
             <CategoryCard
               key={cat.id}
