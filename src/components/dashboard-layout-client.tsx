@@ -110,13 +110,11 @@ export function DashboardLayoutClient({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex min-h-screen w-full md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden">
+      <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full shrink-0 overflow-hidden">
         <Sidebar categories={categories} />
-        <div className="flex flex-col flex-1 min-w-0 min-h-screen md:min-h-0 md:h-full md:overflow-y-auto overflow-x-hidden bg-muted/25">
+        <div className="flex min-h-0 flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain bg-muted/25">
           {header}
-          <main className="relative flex-1 min-h-0 p-4 md:p-7 pb-20 md:pb-7">
-            {children}
-          </main>
+          <main className="relative flex-1 min-h-0 p-4 md:p-7 pb-20 md:pb-7">{children}</main>
         </div>
       </div>
       <MobileNav />

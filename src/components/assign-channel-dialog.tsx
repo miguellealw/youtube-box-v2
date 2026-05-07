@@ -29,10 +29,13 @@ export function AssignChannelDialog({
   subscription,
   categories,
   assignedCategoryIds,
+  triggerVariant = "default",
 }: {
   subscription: Subscription
   categories: Category[]
   assignedCategoryIds: string[]
+  /** Icon-only trigger for dense layouts (e.g. subscription grid). */
+  triggerVariant?: "default" | "compact"
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -118,11 +121,19 @@ export function AssignChannelDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm" className="gap-1.5" />
+          <Button
+            variant="outline"
+            size={triggerVariant === "compact" ? "icon-sm" : "sm"}
+            className={cn(triggerVariant === "compact" ? "size-9 shrink-0" : "gap-1.5")}
+          />
         }
       >
-        <Plus className="h-3.5 w-3.5" />
-        Organize
+        <Plus className={triggerVariant === "compact" ? "size-4" : "size-3.5"} />
+        {triggerVariant === "compact" ? (
+          <span className="sr-only">Organize</span>
+        ) : (
+          "Organize"
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

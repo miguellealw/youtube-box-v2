@@ -266,16 +266,15 @@ export function SubscriptionList({
               layout === "grid" ? (
                 <li
                   key={sub.channelId}
-                  className="relative flex flex-col items-center rounded-lg border pt-9 pb-3 px-3 gap-2 text-center"
+                  className="relative flex flex-col items-center overflow-visible rounded-lg border pt-11 pb-3 px-3 gap-2 text-center"
                 >
-                  <div className="absolute top-2 left-2 z-10">
+                  <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex w-full items-start justify-end gap-2 px-1 md:justify-between [&>*]:pointer-events-auto">
                     <DraggableGrip subscription={sub} />
-                  </div>
-                  <div className="absolute top-2 right-2 z-10">
                     <AssignChannelDialog
                       subscription={sub}
                       categories={categories}
                       assignedCategoryIds={assignedMap[sub.channelId] ?? []}
+                      triggerVariant="compact"
                     />
                   </div>
                   <a
