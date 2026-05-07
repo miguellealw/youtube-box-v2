@@ -110,10 +110,12 @@ export function SubscriptionList({
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [layout, setLayout] = useState<SubsLayout>("stacked")
+  const [fetchingAll, setFetchingAll] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
   // Ref to avoid stale closure in the observer callback
   const nextTokenRef = useRef<string | null>(null)
   const loadingMoreRef = useRef(false)
+  const fetchingAllRef = useRef(false)
 
   const loadPage = useCallback(async (token?: string) => {
     const url = token
@@ -147,7 +149,8 @@ export function SubscriptionList({
         if (
           entries[0].isIntersecting &&
           nextTokenRef.current &&
-          !loadingMoreRef.current
+          !loadingMoreRef.current &&
+          !fetchingAllRef.current
         ) {
           loadingMoreRef.current = true
           setLoadingMore(true)
@@ -172,6 +175,36 @@ export function SubscriptionList({
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [loadPage])
+
+  // When user searches and there are unloaded pages, fetch all remaining pages
+  useEffect(() => {
+    if (!search || !nextTokenRef.current || fetchingAllRef.current) return
+
+    let cancelled = false
+    fetchingAllRef.current = true
+    setFetchingAll(true)
+
+    const fetchAll = async () => {
+      let token = nextTokenRef.current
+      while (token && !cancelled) {
+        const page = await loadPage(token)
+        if (cancelled) break
+        setItems((prev) => dedupeSubscriptionsByChannelId([...prev, ...page.items]))
+        token = page.nextPageToken
+        nextTokenRef.current = page.nextPageToken
+        setNextPageToken(page.nextPageToken)
+      }
+    }
+
+    fetchAll()
+      .catch(() => { if (!cancelled) setError("Failed to load all subscriptions for search.") })
+      .finally(() => {
+        fetchingAllRef.current = false
+        setFetchingAll(false)
+      })
+
+    return () => { cancelled = true }
+  }, [search, loadPage])
 
   useEffect(() => {
     try {
@@ -217,7 +250,7 @@ export function SubscriptionList({
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <Input
-            placeholder="Search loaded subscriptions…"
+            placeholder="Search subscriptions…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:max-w-sm"
@@ -255,6 +288,12 @@ export function SubscriptionList({
         <p className="hidden md:block text-xs text-muted-foreground mt-3">
           Drag the handle next to a channel onto a category in the sidebar.
         </p>
+
+        {fetchingAll && (
+          <span className="text-xs text-muted-foreground animate-pulse mt-1 block">
+            Loading all subscriptions…
+          </span>
+        )}
       </div>
 
       <ul className={listClass}>
