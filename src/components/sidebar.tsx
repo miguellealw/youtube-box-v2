@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, List, Tv } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -38,6 +39,9 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+      <div className="px-3 py-4 border-t">
+        <ThemeToggle />
+      </div>
     </aside>
   )
 }
