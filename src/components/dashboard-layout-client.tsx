@@ -2,6 +2,7 @@
 
 import { useCallback, useState, type ReactNode, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { useScrollRestoration } from "@/hooks/use-scroll-restoration"
 import {
   DndContext,
   DragOverlay,
@@ -42,6 +43,7 @@ export function DashboardLayoutClient({
   children: ReactNode
 }) {
   const router = useRouter()
+  const scrollRef = useScrollRestoration<HTMLDivElement>()
   const [dragging, setDragging] = useState<Subscription | null>(null)
 
   const sensors = useSensors(
@@ -114,7 +116,7 @@ export function DashboardLayoutClient({
     >
       <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full shrink-0 overflow-hidden">
         <Sidebar categories={categories} user={user} />
-        <div className="flex min-h-0 flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain bg-muted/25">
+        <div ref={scrollRef} className="flex min-h-0 flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain bg-muted/25">
           {header}
           <main className="relative px-4 pt-4 pb-7 md:px-7 md:pt-7">
             {children}
