@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { categories, categoryChannels } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import { categories, categoryChannels, watchedVideos } from "@/db/schema"
+import { eq, and, inArray } from "drizzle-orm"
 import { getAccessToken } from "@/lib/tokens"
 import { fetchUploadsPlaylistId, fetchRecentVideos } from "@/lib/youtube"
 import { cached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache"
@@ -86,7 +86,20 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    return NextResponse.json(videos)
+    const videoIds = videos.map((v) => v.videoId)
+    const watched = videoIds.length
+      ? await db
+          .select({ videoId: watchedVideos.videoId })
+          .from(watchedVideos)
+          .where(
+            and(
+              eq(watchedVideos.userId, userId),
+              inArray(watchedVideos.videoId, videoIds)
+            )
+          )
+      : []
+
+    return NextResponse.json({ videos, watchedVideoIds: watched.map((w) => w.videoId) })
   } catch (err) {
     console.error("feed route error:", err)
     return NextResponse.json(

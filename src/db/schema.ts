@@ -92,8 +92,21 @@ export const categoryChannels = pgTable("categoryChannel", {
   addedAt: timestamp("addedAt", { mode: "date" }).defaultNow().notNull(),
 })
 
+export const watchedVideos = pgTable(
+  "watchedVideo",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    videoId: text("videoId").notNull(),
+    watchedAt: timestamp("watchedAt", { mode: "date" }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.videoId] })]
+)
+
 export type User = typeof users.$inferSelect
 export type Category = typeof categories.$inferSelect
 export type CategoryChannel = typeof categoryChannels.$inferSelect
+export type WatchedVideo = typeof watchedVideos.$inferSelect
 export type NewCategory = typeof categories.$inferInsert
 export type NewCategoryChannel = typeof categoryChannels.$inferInsert
