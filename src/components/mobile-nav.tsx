@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, List, Tv } from "lucide-react"
+import { LayoutDashboard, List, LogOut, Tv } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { signOutAction } from "@/actions/auth"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -37,6 +38,15 @@ export function MobileNav() {
           <ThemeToggle />
           <span className="text-xs text-muted-foreground">Theme</span>
         </div>
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-md text-xs font-medium transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            <span>Sign out</span>
+          </button>
+        </form>
       </div>
     </nav>
   )

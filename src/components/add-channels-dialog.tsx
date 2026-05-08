@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { assignChannel, removeChannel } from "@/actions/channels"
-import { Plus, Check, Loader2 } from "lucide-react"
+import { Plus, Check, Loader2, ListPlus } from "lucide-react"
 import { toast } from "sonner"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 
@@ -148,12 +148,17 @@ export function AddChannelsDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        render={<Button variant="outline" size="sm" className="gap-1.5" />}
+        render={
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/50 hover:text-foreground"
+          />
+        }
       >
-        <Plus className="h-3.5 w-3.5" />
+        <ListPlus className="h-3.5 w-3.5" />
         Add channels
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md flex flex-col max-h-[80vh] overflow-hidden">
+      <DialogContent className="flex flex-col max-h-[80vh] overflow-hidden sm:max-w-md md:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add channels to category</DialogTitle>
         </DialogHeader>

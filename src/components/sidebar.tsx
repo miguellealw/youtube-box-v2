@@ -3,17 +3,23 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { LayoutDashboard, Plus, Settings2, Tv, Search } from "lucide-react"
+import { LayoutDashboard, LogOut, Plus, Settings2, Tv, Search } from "lucide-react"
 import { useDroppable } from "@dnd-kit/core"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
+import { signOutAction } from "@/actions/auth"
 
 export type SidebarCategory = {
   id: string
   name: string
   emoji: string | null
+}
+
+export type SidebarUser = {
+  name?: string | null
+  email?: string | null
 }
 
 const primaryNav = [
@@ -59,7 +65,7 @@ function CategoryNavRow({ category }: { category: SidebarCategory }) {
   )
 }
 
-export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
+export function Sidebar({ categories, user }: { categories: SidebarCategory[]; user: SidebarUser }) {
   const pathname = usePathname()
   const [search, setSearch] = useState("")
   const filteredCategories = categories.filter((c) =>
@@ -154,6 +160,20 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
         <div className="flex items-center px-3 pt-1">
           <ThemeToggle />
         </div>
+      </div>
+      <div className="border-t border-sidebar-border px-2 py-3">
+        <div className="px-3 pb-1.5">
+          <p className="text-xs text-muted-foreground truncate">{user.name ?? user.email}</p>
+        </div>
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground w-full text-left"
+          >
+            <LogOut className="h-4 w-4 opacity-90" />
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   )

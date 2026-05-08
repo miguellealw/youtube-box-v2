@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/core"
 import { assignChannel } from "@/actions/channels"
 import { MobileNav } from "@/components/mobile-nav"
-import { Sidebar, type SidebarCategory } from "@/components/sidebar"
+import { Sidebar, type SidebarCategory, type SidebarUser } from "@/components/sidebar"
 import { toast } from "sonner"
 import type { Subscription } from "@/lib/youtube"
 
@@ -32,10 +32,12 @@ const dropAnimation: DropAnimation = {
 
 export function DashboardLayoutClient({
   categories,
+  user,
   header,
   children,
 }: {
   categories: SidebarCategory[]
+  user: SidebarUser
   header: ReactNode
   children: ReactNode
 }) {
@@ -111,7 +113,7 @@ export function DashboardLayoutClient({
       onDragCancel={handleDragCancel}
     >
       <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full shrink-0 overflow-hidden">
-        <Sidebar categories={categories} />
+        <Sidebar categories={categories} user={user} />
         <div className="flex min-h-0 flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain bg-muted/25">
           {header}
           <main className="relative flex-1 min-h-0 px-4 pt-4 md:px-7 md:pt-7 md:pb-7">

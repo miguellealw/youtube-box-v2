@@ -1,8 +1,7 @@
 import Link from "next/link"
-import { auth, signOut } from "@/auth"
+import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { DashboardLayoutClient } from "@/components/dashboard-layout-client"
-import { Button } from "@/components/ui/button"
 import { db } from "@/db"
 import { categories } from "@/db/schema"
 import { eq } from "drizzle-orm"
@@ -27,31 +26,19 @@ export default async function DashboardLayout({
     .orderBy(categories.name)
 
   const header = (
-    <header className="sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-border/80 bg-background/80 px-4 py-3 backdrop-blur-md md:px-6 supports-[backdrop-filter]:bg-background/70">
-      <Link
-        href="/dashboard"
-        className="font-semibold text-base tracking-tight md:hidden mr-auto"
-      >
+    <header className="sticky top-0 z-10 flex shrink-0 items-center border-b border-border/80 bg-background/80 px-4 py-3 backdrop-blur-md md:hidden supports-[backdrop-filter]:bg-background/70">
+      <Link href="/dashboard" className="font-semibold text-base tracking-tight">
         YouTube Box
       </Link>
-      <span className="text-sm text-muted-foreground hidden sm:block ml-auto truncate max-w-[180px]">
-        {session.user?.name ?? session.user?.email}
-      </span>
-      <form
-        action={async () => {
-          "use server"
-          await signOut({ redirectTo: "/" })
-        }}
-      >
-        <Button variant="outline" size="sm" type="submit">
-          Sign out
-        </Button>
-      </form>
     </header>
   )
 
   return (
-    <DashboardLayoutClient categories={categoryRows} header={header}>
+    <DashboardLayoutClient
+      categories={categoryRows}
+      user={{ name: session.user?.name, email: session.user?.email }}
+      header={header}
+    >
       {children}
     </DashboardLayoutClient>
   )

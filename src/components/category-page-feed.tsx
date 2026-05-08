@@ -36,46 +36,44 @@ export function CategoryPageFeed({
 
   return (
     <>
-      {channels.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          {channels.map((ch) => {
-            const isFiltering = activeChannelIds !== null
-            const isSelected =
-              !isFiltering || (activeChannelIds?.includes(ch.channelId) ?? false)
-            return (
-              <button
-                key={ch.channelId}
-                type="button"
-                onClick={() => toggleChannelFilter(ch.channelId)}
-                aria-pressed={isSelected}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
-                  isFiltering && !isSelected && "opacity-45",
-                  isFiltering &&
-                    isSelected &&
-                    "border-primary bg-primary/10 ring-1 ring-primary/25"
-                )}
-              >
-                {ch.channelThumbnail && (
-                  <Image
-                    src={ch.channelThumbnail}
-                    alt=""
-                    width={16}
-                    height={16}
-                    className="rounded-full"
-                  />
-                )}
-                {ch.channelName}
-              </button>
-            )
-          })}
-        </div>
-      )}
-      <AddChannelsDialog
-        categoryId={categoryId}
-        initialAssignedIds={initialAssignedIds}
-        onChannelChange={() => setRefreshKey((k) => k + 1)}
-      />
+      <div className="flex flex-wrap items-center gap-2 mb-10">
+        {channels.map((ch) => {
+          const isFiltering = activeChannelIds !== null
+          const isSelected =
+            !isFiltering || (activeChannelIds?.includes(ch.channelId) ?? false)
+          return (
+            <button
+              key={ch.channelId}
+              type="button"
+              onClick={() => toggleChannelFilter(ch.channelId)}
+              aria-pressed={isSelected}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+                isFiltering && !isSelected && "opacity-45",
+                isFiltering &&
+                  isSelected &&
+                  "border-primary bg-primary/10 ring-1 ring-primary/25"
+              )}
+            >
+              {ch.channelThumbnail && (
+                <Image
+                  src={ch.channelThumbnail}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
+              )}
+              {ch.channelName}
+            </button>
+          )
+        })}
+        <AddChannelsDialog
+          categoryId={categoryId}
+          initialAssignedIds={initialAssignedIds}
+          onChannelChange={() => setRefreshKey((k) => k + 1)}
+        />
+      </div>
       <CategoryFeed
         categoryId={categoryId}
         refreshKey={refreshKey}

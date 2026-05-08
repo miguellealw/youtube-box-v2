@@ -5,9 +5,10 @@ import { db } from "@/db"
 import { categories, categoryChannels } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { CategoryPageFeed } from "@/components/category-page-feed"
+import { CategoryBackButton } from "@/components/category-back-button"
 import { buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, ChevronLeft } from "lucide-react"
+import { Pencil } from "lucide-react"
 
 export default async function CategoryPage({
   params,
@@ -32,16 +33,13 @@ export default async function CategoryPage({
     .where(eq(categoryChannels.categoryId, categoryId))
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <div className="sticky top-12 md:top-0 z-20 -mx-4 px-4 md:-mx-7 md:px-7 py-2 bg-background/95 backdrop-blur-md border-b border-border/80">
+        <CategoryBackButton />
+      </div>
+
+      <div className="flex flex-wrap items-start justify-between gap-3 mt-4">
         <div>
-          <Link
-            href="/categories"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            All categories
-          </Link>
           <div className="flex items-center gap-3">
             <span className="text-2xl leading-none shrink-0">{category.emoji ?? "📁"}</span>
             <h1 className="text-2xl font-bold">{category.name}</h1>
@@ -60,11 +58,13 @@ export default async function CategoryPage({
         </Link>
       </div>
 
-      <CategoryPageFeed
-        categoryId={categoryId}
-        initialAssignedIds={channels.map((ch) => ch.channelId)}
-        channels={channels}
-      />
+      <div className="mt-6">
+        <CategoryPageFeed
+          categoryId={categoryId}
+          initialAssignedIds={channels.map((ch) => ch.channelId)}
+          channels={channels}
+        />
+      </div>
     </div>
   )
 }
