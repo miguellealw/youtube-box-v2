@@ -57,9 +57,11 @@ export function AddChannelsDialog({
   const [search, setSearch] = useState("")
   const [assigned, setAssigned] = useState(new Set(initialAssignedIds))
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [loadingAll, setLoadingAll] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const nextTokenRef = useRef<string | null>(null)
   const loadingMoreRef = useRef(false)
+  const loadingAllRef = useRef(false)
   const hasLoaded = useRef(false)
   const router = useRouter()
 
@@ -86,9 +88,36 @@ export function AddChannelsDialog({
       .finally(() => setInitialLoading(false))
   }, [open, loadPage])
 
+  const loadAll = useCallback(async () => {
+    if (loadingAllRef.current || !nextTokenRef.current) return
+    loadingAllRef.current = true
+    setLoadingAll(true)
+    try {
+      let token: string | null = nextTokenRef.current
+      while (token) {
+        const { items: newItems, nextPageToken } = await loadPage(token)
+        setItems((prev) => [...prev, ...newItems])
+        setNextPageToken(nextPageToken)
+        nextTokenRef.current = nextPageToken
+        token = nextPageToken
+      }
+    } catch {
+      setError("Failed to load all subscriptions. Search results may be incomplete.")
+    } finally {
+      loadingAllRef.current = false
+      setLoadingAll(false)
+    }
+  }, [loadPage])
+
+  useEffect(() => {
+    if (search && nextTokenRef.current && !loadingAllRef.current) {
+      loadAll()
+    }
+  }, [search, loadAll])
+
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
-    if (!el || loadingMoreRef.current || !nextTokenRef.current) return
+    if (!el || loadingMoreRef.current || loadingAllRef.current || !nextTokenRef.current) return
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
       loadingMoreRef.current = true
       setLoadingMore(true)
@@ -222,12 +251,17 @@ export function AddChannelsDialog({
                     </li>
                   )
                 })}
-            {loadingMore &&
+            {(loadingMore || loadingAll) &&
               Array.from({ length: 3 }).map((_, i) => (
                 <ChannelSkeleton key={`more-${i}`} />
               ))}
           </ul>
-          {!initialLoading && !nextPageToken && items.length > 0 && (
+          {loadingAll && (
+            <p className="text-center text-xs text-muted-foreground pb-4">
+              Loading all subscriptions…
+            </p>
+          )}
+          {!initialLoading && !loadingAll && !nextPageToken && items.length > 0 && (
             <p className="text-center text-xs text-muted-foreground pb-4">
               All {items.length} subscriptions loaded
             </p>
