@@ -5,8 +5,7 @@ import { categories } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { updateCategory } from "@/actions/categories"
 import { CategoryForm } from "@/components/category-form"
-import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
+import { CategoryBackButton } from "@/components/category-back-button"
 
 export default async function EditCategoryPage({
   params,
@@ -30,13 +29,9 @@ export default async function EditCategoryPage({
   return (
     <div className="max-w-md space-y-6">
       <div>
-        <Link
-          href="/categories"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to categories
-        </Link>
+        <div className="mb-2">
+          <CategoryBackButton />
+        </div>
         <h1 className="text-2xl font-bold">Edit Category</h1>
       </div>
       <CategoryForm

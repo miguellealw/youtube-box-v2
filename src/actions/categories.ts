@@ -122,8 +122,9 @@ export async function updateCategory(categoryId: string, _prevState: unknown, fo
     .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
 
   revalidatePath("/categories")
+  revalidatePath(`/categories/${categoryId}`)
   revalidatePath("/dashboard")
-  redirect("/categories")
+  redirect(`/categories/${categoryId}`)
 }
 
 export async function deleteCategory(categoryId: string) {
