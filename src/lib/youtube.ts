@@ -2,7 +2,7 @@ const YT_API = "https://www.googleapis.com/youtube/v3"
 
 /** YouTube snippet.thumbnails keys; pick the largest URL that exists. */
 type YTThumbnailSet = Partial<
-  Record<"maxres" | "standard" | "high" | "medium" | "default", { url?: string }>
+  Record<"maxres" | "standard" | "high" | "medium" | "default", { url?: string; width?: number; height?: number }>
 >
 
 function pickBestThumbnailUrl(thumbnails?: YTThumbnailSet | null): string {
@@ -154,20 +154,60 @@ function parseIso8601DurationSeconds(iso: string): number {
   return h * 3600 + minute * 60 + s
 }
 
-/** No native Short flag in API; we treat ≤2min as likely short-form and keep longer uploads. */
-async function fetchVideoDurationSecondsMap(
+/**
+ * Returns true when the best available thumbnail dimensions indicate portrait (width < height).
+ * Returns null when no dimension data is available.
+ */
+function isPortraitThumbnail(thumbnails?: YTThumbnailSet | null): boolean | null {
+  if (!thumbnails) return null
+  const order = ["maxres", "standard", "high", "medium", "default"] as const
+  for (const key of order) {
+    const t = thumbnails[key]
+    if (t?.width && t?.height) {
+      return t.width < t.height
+    }
+  }
+  return null
+}
+
+interface VideoDetails {
+  durationSeconds: number
+  isPortrait: boolean | null
+  hasShortTag: boolean
+}
+
+/**
+ * Fetches duration and thumbnail aspect ratio for a list of video IDs.
+ * Uses part=contentDetails,snippet in a single batched call — no extra quota cost.
+ */
+async function fetchVideoDetailsMap(
   accessToken: string,
   videoIds: string[]
-): Promise<Map<string, number>> {
-  const map = new Map<string, number>()
+): Promise<Map<string, VideoDetails>> {
+  const map = new Map<string, VideoDetails>()
   const unique = [...new Set(videoIds)]
   for (let i = 0; i < unique.length; i += 50) {
     const batch = unique.slice(i, i + 50)
     const data = await ytFetch<{
-      items?: { id: string; contentDetails: { duration: string } }[]
-    }>("/videos", { part: "contentDetails", id: batch.join(",") }, accessToken)
+      items?: {
+        id: string
+        contentDetails: { duration: string }
+        snippet: { thumbnails: YTThumbnailSet; description?: string; tags?: string[] }
+      }[]
+    }>("/videos", { part: "contentDetails,snippet", id: batch.join(",") }, accessToken)
     for (const item of data.items ?? []) {
-      map.set(item.id, parseIso8601DurationSeconds(item.contentDetails.duration))
+      const desc = (item.snippet.description ?? "").toLowerCase()
+      const tags = (item.snippet.tags ?? []).map((t: string) => t.toLowerCase())
+      const hasShortTag =
+        desc.includes("#shorts") ||
+        desc.includes("#short") ||
+        tags.includes("shorts") ||
+        tags.includes("short")
+      map.set(item.id, {
+        durationSeconds: parseIso8601DurationSeconds(item.contentDetails.duration),
+        isPortrait: isPortraitThumbnail(item.snippet.thumbnails),
+        hasShortTag,
+      })
     }
   }
   return map
@@ -218,17 +258,27 @@ export async function fetchRecentVideos(
   }))
 
   if (videos.length > 0) {
-    const durations = await fetchVideoDurationSecondsMap(
+    const details = await fetchVideoDetailsMap(
       accessToken,
       videos.map((v) => v.videoId)
     )
     for (const v of videos) {
-      const sec = durations.get(v.videoId)
-      if (sec !== undefined) v.durationSeconds = sec
+      const d = details.get(v.videoId)
+      if (d !== undefined) v.durationSeconds = d.durationSeconds
     }
     if (excludeShorts) {
       const SHORT_MAX_SECONDS = 120
-      videos = videos.filter((v) => (v.durationSeconds ?? Infinity) > SHORT_MAX_SECONDS)
+      videos = videos.filter((v) => {
+        const d = details.get(v.videoId)
+        // Explicit #shorts tag — drop regardless of duration
+        if (d?.hasShortTag) return false
+        const tooShort = (v.durationSeconds ?? Infinity) <= SHORT_MAX_SECONDS
+        if (!tooShort) return true          // long video, no short tag — keep
+        // Short duration: use aspect ratio as tiebreaker
+        const portrait = d?.isPortrait
+        if (portrait === null || portrait === undefined) return false // no data — drop conservatively
+        return !portrait                    // landscape short clip — keep; portrait — drop
+      })
     }
   }
 
