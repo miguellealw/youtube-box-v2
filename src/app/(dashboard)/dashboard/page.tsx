@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, categoryChannels } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { CategoryCard } from "@/components/category-card"
+import { DashboardCategoryGrid } from "@/components/dashboard-category-grid"
 import { buttonVariants } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
@@ -56,15 +56,12 @@ export default async function DashboardPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-          {userCategories.map((cat) => (
-            <CategoryCard
-              key={cat.id}
-              category={cat}
-              channels={channelsByCategory[cat.id] ?? []}
-            />
-          ))}
-        </div>
+        <DashboardCategoryGrid
+          items={userCategories.map((cat) => ({
+            category: cat,
+            channels: channelsByCategory[cat.id] ?? [],
+          }))}
+        />
       )}
     </div>
   )

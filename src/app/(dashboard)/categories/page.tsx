@@ -3,11 +3,9 @@ import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, categoryChannels } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { deleteCategory } from "@/actions/categories"
-import { Plus, Pencil, Trash2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
+import { CategoriesList } from "@/components/categories-list"
+import { Plus } from "lucide-react"
 
 export default async function CategoriesPage() {
   const session = await auth()
@@ -29,6 +27,14 @@ export default async function CategoriesPage() {
     return acc
   }, {})
 
+  const items = rows.map(({ category }) => ({
+    id: category.id,
+    name: category.name,
+    emoji: category.emoji,
+    description: category.description,
+    channelCount: countMap[category.id] ?? 0,
+  }))
+
   return (
     <div className="space-y-6 max-w-3xl w-full">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -44,7 +50,7 @@ export default async function CategoriesPage() {
         </Link>
       </div>
 
-      {rows.length === 0 ? (
+      {items.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           <p className="mb-3">No categories yet.</p>
           <Link href="/categories/new" className={buttonVariants({ variant: "outline" })}>
@@ -52,55 +58,7 @@ export default async function CategoriesPage() {
           </Link>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {rows.map(({ category }) => (
-            <li
-              key={category.id}
-              className="flex items-center gap-4 rounded-lg border p-4"
-            >
-              <span className="text-lg leading-none shrink-0">{category.emoji ?? "📁"}</span>
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/categories/${category.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {category.name}
-                </Link>
-                {category.description && (
-                  <p className="text-sm text-muted-foreground truncate">
-                    {category.description}
-                  </p>
-                )}
-              </div>
-              <Badge variant="secondary">
-                {countMap[category.id] ?? 0} channels
-              </Badge>
-              <Link
-                href={`/categories/${category.id}/edit`}
-                className={buttonVariants({ variant: "ghost", size: "icon" })}
-              >
-                <Pencil className="h-4 w-4" />
-                <span className="sr-only">Edit</span>
-              </Link>
-              <form
-                action={async () => {
-                  "use server"
-                  await deleteCategory(category.id)
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  type="submit"
-                  className={cn("text-destructive hover:text-destructive")}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
-              </form>
-            </li>
-          ))}
-        </ul>
+        <CategoriesList items={items} />
       )}
     </div>
   )
