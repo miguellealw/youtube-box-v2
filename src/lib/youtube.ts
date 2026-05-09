@@ -267,15 +267,19 @@ export async function fetchRecentVideos(
       if (d !== undefined) v.durationSeconds = d.durationSeconds
     }
     if (excludeShorts) {
-      const SHORT_MAX_SECONDS = 120
+      const SHORT_MAX_SECONDS = 180 // YouTube Shorts can now be up to 3 minutes
       videos = videos.filter((v) => {
         const d = details.get(v.videoId)
         // Explicit #shorts tag — drop regardless of duration
         if (d?.hasShortTag) return false
         const tooShort = (v.durationSeconds ?? Infinity) <= SHORT_MAX_SECONDS
-        if (!tooShort) return true          // long video, no short tag — keep
-        // Short duration: use aspect ratio as tiebreaker
         const portrait = d?.isPortrait
+        if (!tooShort) {
+          // Long video (> 180s): keep unless it's portrait (catches untagged vertical uploads)
+          if (portrait === true) return false
+          return true
+        }
+        // Short duration (≤ 180s): use aspect ratio as tiebreaker
         if (portrait === null || portrait === undefined) return false // no data — drop conservatively
         return !portrait                    // landscape short clip — keep; portrait — drop
       })

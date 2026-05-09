@@ -92,7 +92,7 @@ export function VideoCard({
           ) : (
             <Circle className="h-5 w-5" />
           )}
-          {isWatched && <span className="hidden max-sm:inline text-xs font-medium leading-none">Watched</span>}
+          {isWatched && <span className="inline text-xs font-medium leading-none">Watched</span>}
         </button>
       </div>
       <div className="px-3 pb-3 pt-0.5 space-y-1">
