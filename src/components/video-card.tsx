@@ -80,10 +80,11 @@ export function VideoCard({
           aria-label={isWatched ? "Mark as unwatched" : "Mark as watched"}
           className={cn(
             "absolute top-1.5 left-1.5 rounded-full transition-all duration-150 disabled:pointer-events-none",
-            "text-white drop-shadow-sm",
+            "text-white drop-shadow-sm flex items-center gap-1",
+            "max-sm:bg-black/40 max-sm:p-1",
             isWatched
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-80 hover:!opacity-100"
+              ? "opacity-100 max-sm:pr-2"
+              : "opacity-0 group-hover:opacity-80 hover:!opacity-100 max-sm:opacity-70"
           )}
         >
           {isWatched ? (
@@ -91,6 +92,7 @@ export function VideoCard({
           ) : (
             <Circle className="h-5 w-5" />
           )}
+          {isWatched && <span className="hidden max-sm:inline text-xs font-medium leading-none">Watched</span>}
         </button>
       </div>
       <div className="px-3 pb-3 pt-0.5 space-y-1">
