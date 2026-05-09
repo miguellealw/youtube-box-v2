@@ -14,7 +14,7 @@ export async function cached<T>(
   if (hit !== null) return hit
 
   const data = await fn()
-  await redis.setex(key, ttlSeconds, JSON.stringify(data))
+  await redis.setex(key, ttlSeconds, data)
   return data
 }
 

@@ -6,6 +6,7 @@ import { eq, and, inArray } from "drizzle-orm"
 import { getAccessToken } from "@/lib/tokens"
 import { fetchUploadsPlaylistId, fetchRecentVideos } from "@/lib/youtube"
 import { cached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache"
+import { allSettledLimited } from "@/lib/concurrency"
 import type { Video } from "@/lib/youtube"
 
 /** Long-form candidates per channel before merge (single playlist page maxes at 50 items). */
@@ -62,8 +63,8 @@ export async function GET(request: NextRequest) {
 
         const allVideos: Video[] = []
 
-        await Promise.allSettled(
-          channels.map(async (ch) => {
+        await allSettledLimited(
+          channels.map((ch) => async () => {
             const uploadsId = await cached(
               CACHE_KEYS.uploadsPlaylist(ch.channelId),
               CACHE_TTL.uploadsPlaylist,
@@ -78,7 +79,8 @@ export async function GET(request: NextRequest) {
               }
             )
             allVideos.push(...videos)
-          })
+          }),
+          5  // max concurrent channel fetches
         )
 
         allVideos.sort(compareByUploadTime)
