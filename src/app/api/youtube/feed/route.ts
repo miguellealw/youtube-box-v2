@@ -9,10 +9,10 @@ import { cached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache"
 import { allSettledLimited } from "@/lib/concurrency"
 import type { Video } from "@/lib/youtube"
 
-/** Long-form candidates per channel before merge (single playlist page maxes at 50 items). */
-const CANDIDATES_PER_CHANNEL = 20
-/** Total videos returned after global sort by upload time. */
+/** Total long-form videos returned after global sort by upload time. */
 const MAX_FEED_VIDEOS = 50
+/** Total Shorts returned for the horizontal row. */
+const MAX_SHORTS_TOTAL = 20
 
 function publishedTimestamp(iso: string): number {
   const t = new Date(iso).getTime()
@@ -70,21 +70,21 @@ export async function GET(request: NextRequest) {
               CACHE_TTL.uploadsPlaylist,
               () => fetchUploadsPlaylistId(accessToken, ch.channelId)
             )
-            const videos = await fetchRecentVideos(
-              accessToken,
-              uploadsId,
-              CANDIDATES_PER_CHANNEL,
-              {
-                excludeShorts: true,
-              }
-            )
+            const videos = await fetchRecentVideos(accessToken, uploadsId)
             allVideos.push(...videos)
           }),
           5  // max concurrent channel fetches
         )
 
-        allVideos.sort(compareByUploadTime)
-        return allVideos.slice(0, MAX_FEED_VIDEOS)
+        const longForm = allVideos
+          .filter((v) => !v.isShort)
+          .sort(compareByUploadTime)
+          .slice(0, MAX_FEED_VIDEOS)
+        const shorts = allVideos
+          .filter((v) => v.isShort)
+          .sort(compareByUploadTime)
+          .slice(0, MAX_SHORTS_TOTAL)
+        return [...longForm, ...shorts]
       }
     )
 

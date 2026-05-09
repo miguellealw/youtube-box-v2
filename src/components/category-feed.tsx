@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { EyeOff, Eye } from "lucide-react"
-import { VideoCard } from "@/components/video-card"
+import { VideoCard, ShortCard } from "@/components/video-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import type { Video } from "@/lib/youtube"
@@ -51,22 +51,44 @@ export function CategoryFeed({
       .finally(() => setLoading(false))
   }, [categoryId, refreshKey])
 
-  const visibleVideos = useMemo(() => {
-    let result = videos
+  const { shorts, longForm } = useMemo(() => ({
+    shorts: videos.filter((v) => v.isShort),
+    longForm: videos.filter((v) => !v.isShort),
+  }), [videos])
+
+  const visibleLongForm = useMemo(() => {
+    let result = longForm
     if (activeChannelIds?.length) {
       const channelSet = new Set(activeChannelIds)
       result = result.filter((v) => channelSet.has(v.channelId))
     }
-    if (hideWatched) {
-      result = result.filter((v) => !watchedSet.has(v.videoId))
-    }
+    if (hideWatched) result = result.filter((v) => !watchedSet.has(v.videoId))
     return result
-  }, [videos, activeChannelIds, hideWatched, watchedSet])
+  }, [longForm, activeChannelIds, hideWatched, watchedSet])
+
+  const visibleShorts = useMemo(() => {
+    let result = shorts
+    if (activeChannelIds?.length) {
+      const channelSet = new Set(activeChannelIds)
+      result = result.filter((v) => channelSet.has(v.channelId))
+    }
+    if (hideWatched) result = result.filter((v) => !watchedSet.has(v.videoId))
+    return result
+  }, [shorts, activeChannelIds, hideWatched, watchedSet])
 
   const watchedCount = useMemo(
     () => videos.filter((v) => watchedSet.has(v.videoId)).length,
     [videos, watchedSet]
   )
+
+  function toggleWatched(videoId: string) {
+    setWatchedSet((prev) => {
+      const next = new Set(prev)
+      if (next.has(videoId)) next.delete(videoId)
+      else next.add(videoId)
+      return next
+    })
+  }
 
   if (error) {
     return <p className="text-sm text-destructive">{error}</p>
@@ -90,6 +112,8 @@ export function CategoryFeed({
       </div>
     )
   }
+
+  const hasNoVisibleVideos = visibleLongForm.length === 0 && visibleShorts.length === 0
 
   return (
     <div className="space-y-4">
@@ -120,7 +144,7 @@ export function CategoryFeed({
         </div>
       )}
 
-      {visibleVideos.length === 0 ? (
+      {hasNoVisibleVideos ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           {hideWatched ? (
             <>
@@ -144,22 +168,38 @@ export function CategoryFeed({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {visibleVideos.map((video) => (
-            <VideoCard
-              key={video.videoId}
-              video={video}
-              isWatched={watchedSet.has(video.videoId)}
-              onToggleWatched={() => {
-                setWatchedSet((prev) => {
-                  const next = new Set(prev)
-                  if (next.has(video.videoId)) next.delete(video.videoId)
-                  else next.add(video.videoId)
-                  return next
-                })
-              }}
-            />
-          ))}
+        <div className="space-y-6">
+          {visibleShorts.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                Shorts
+              </p>
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                {visibleShorts.map((video) => (
+                  <div key={video.videoId} className="flex-none w-36">
+                    <ShortCard
+                      video={video}
+                      isWatched={watchedSet.has(video.videoId)}
+                      onToggleWatched={() => toggleWatched(video.videoId)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {visibleLongForm.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visibleLongForm.map((video) => (
+                <VideoCard
+                  key={video.videoId}
+                  video={video}
+                  isWatched={watchedSet.has(video.videoId)}
+                  onToggleWatched={() => toggleWatched(video.videoId)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

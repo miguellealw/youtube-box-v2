@@ -37,6 +37,7 @@ export interface Video {
   channelName: string
   publishedAt: string
   durationSeconds?: number
+  isShort?: boolean
 }
 
 async function ytFetch<T>(
@@ -230,24 +231,18 @@ export async function fetchUploadsPlaylistId(
 export async function fetchRecentVideos(
   accessToken: string,
   uploadsPlaylistId: string,
-  maxResults = 5,
-  options?: { excludeShorts?: boolean }
 ): Promise<Video[]> {
-  const excludeShorts = options?.excludeShorts === true
-  const playlistPageSize =
-    excludeShorts ? Math.min(50, Math.max(maxResults * 15, 20)) : maxResults
-
   const data = await ytFetch<{ items: YTPlaylistItem[] }>(
     "/playlistItems",
     {
       part: "snippet",
       playlistId: uploadsPlaylistId,
-      maxResults: String(playlistPageSize),
+      maxResults: "50",
     },
     accessToken
   )
 
-  let videos = (data.items ?? []).map((item) => ({
+  const videos = (data.items ?? []).map((item) => ({
     videoId: item.snippet.resourceId.videoId,
     title: item.snippet.title,
     thumbnail: pickBestThumbnailUrl(item.snippet.thumbnails),
@@ -255,36 +250,26 @@ export async function fetchRecentVideos(
     channelName: item.snippet.channelTitle,
     publishedAt: item.snippet.publishedAt,
     durationSeconds: undefined as number | undefined,
+    isShort: undefined as boolean | undefined,
   }))
 
   if (videos.length > 0) {
+    const SHORT_MAX_SECONDS = 180
     const details = await fetchVideoDetailsMap(
       accessToken,
       videos.map((v) => v.videoId)
     )
     for (const v of videos) {
       const d = details.get(v.videoId)
-      if (d !== undefined) v.durationSeconds = d.durationSeconds
-    }
-    if (excludeShorts) {
-      const SHORT_MAX_SECONDS = 180 // YouTube Shorts can now be up to 3 minutes
-      videos = videos.filter((v) => {
-        const d = details.get(v.videoId)
-        // Explicit #shorts tag — drop regardless of duration
-        if (d?.hasShortTag) return false
-        const tooShort = (v.durationSeconds ?? Infinity) <= SHORT_MAX_SECONDS
-        const portrait = d?.isPortrait
-        if (!tooShort) {
-          // Long video (> 180s): keep unless it's portrait (catches untagged vertical uploads)
-          if (portrait === true) return false
-          return true
-        }
-        // Short duration (≤ 180s): use aspect ratio as tiebreaker
-        if (portrait === null || portrait === undefined) return false // no data — drop conservatively
-        return !portrait                    // landscape short clip — keep; portrait — drop
-      })
+      if (d === undefined) {
+        v.isShort = true // no data — treat conservatively as Short
+        continue
+      }
+      v.durationSeconds = d.durationSeconds
+      const tooShort = d.durationSeconds <= SHORT_MAX_SECONDS
+      v.isShort = d.hasShortTag || d.isPortrait === true || tooShort
     }
   }
 
-  return videos.slice(0, maxResults)
+  return videos
 }

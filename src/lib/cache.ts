@@ -27,8 +27,8 @@ export const CACHE_KEYS = {
   subscriptionPage: (userId: string, token: string) =>
     `yt:subs:${userId}:page:${token}`,
   uploadsPlaylist: (channelId: string) => `yt:uploads:${channelId}`,
-  /** bump version when feed merge/sort semantics change (invalidates stale cache) */
-  feed: (categoryId: string) => `yt:feed:v3:${categoryId}`,
+  /** bump version when feed shape changes (invalidates stale cache); v5: fixed isShort detection for landscape short-duration videos */
+  feed: (categoryId: string) => `yt:feed:v5:${categoryId}`,
 } as const
 
 export const CACHE_TTL = {
