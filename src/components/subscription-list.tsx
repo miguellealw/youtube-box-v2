@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { AssignChannelDialog } from "@/components/assign-channel-dialog"
+import { ChannelInfoDialog } from "@/components/channel-info-dialog"
 import { cn } from "@/lib/utils"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 import type { Category } from "@/db/schema"
@@ -316,39 +317,35 @@ export function SubscriptionList({
                       triggerVariant="compact"
                     />
                   </div>
-                  <a
-                    href={`https://www.youtube.com/channel/${sub.channelId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0"
+                  <ChannelInfoDialog
+                    subscription={sub}
+                    categories={categories}
+                    assignedCategoryIds={assignedMap[sub.channelId] ?? []}
                   >
-                    {sub.channelThumbnail ? (
-                      <Image
-                        src={sub.channelThumbnail}
-                        alt={sub.channelName}
-                        width={56}
-                        height={56}
-                        className="rounded-full hover:opacity-80 transition-opacity"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-full bg-muted" />
-                    )}
-                  </a>
-                  <div className="min-w-0 w-full">
-                    <a
-                      href={`https://www.youtube.com/channel/${sub.channelId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-sm line-clamp-2 hover:underline"
-                    >
-                      {sub.channelName}
-                    </a>
-                    {sub.subscriberCount && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatSubscriberCount(sub.subscriberCount)} subs
-                      </p>
-                    )}
-                  </div>
+                    <div className="shrink-0 cursor-pointer">
+                      {sub.channelThumbnail ? (
+                        <Image
+                          src={sub.channelThumbnail}
+                          alt={sub.channelName}
+                          width={56}
+                          height={56}
+                          className="rounded-full hover:opacity-80 transition-opacity"
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-full bg-muted" />
+                      )}
+                    </div>
+                    <div className="min-w-0 w-full">
+                      <span className="font-medium text-sm line-clamp-2 hover:underline cursor-pointer">
+                        {sub.channelName}
+                      </span>
+                      {sub.subscriberCount && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formatSubscriberCount(sub.subscriberCount)} subs
+                        </p>
+                      )}
+                    </div>
+                  </ChannelInfoDialog>
                 </li>
               ) : (
                 <li
@@ -356,39 +353,35 @@ export function SubscriptionList({
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
                   <DraggableGrip subscription={sub} />
-                  <a
-                    href={`https://www.youtube.com/channel/${sub.channelId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0"
+                  <ChannelInfoDialog
+                    subscription={sub}
+                    categories={categories}
+                    assignedCategoryIds={assignedMap[sub.channelId] ?? []}
                   >
-                    {sub.channelThumbnail ? (
-                      <Image
-                        src={sub.channelThumbnail}
-                        alt={sub.channelName}
-                        width={40}
-                        height={40}
-                        className="rounded-full hover:opacity-80 transition-opacity"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-muted" />
-                    )}
-                  </a>
-                  <div className="flex-1 min-w-0">
-                    <a
-                      href={`https://www.youtube.com/channel/${sub.channelId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-sm truncate hover:underline block"
-                    >
-                      {sub.channelName}
-                    </a>
-                    {sub.subscriberCount && (
-                      <p className="text-xs text-muted-foreground">
-                        {formatSubscriberCount(sub.subscriberCount)} subscribers
-                      </p>
-                    )}
-                  </div>
+                    <div className="shrink-0 cursor-pointer">
+                      {sub.channelThumbnail ? (
+                        <Image
+                          src={sub.channelThumbnail}
+                          alt={sub.channelName}
+                          width={40}
+                          height={40}
+                          className="rounded-full hover:opacity-80 transition-opacity"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-muted" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-sm truncate hover:underline block cursor-pointer">
+                        {sub.channelName}
+                      </span>
+                      {sub.subscriberCount && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatSubscriberCount(sub.subscriberCount)} subscribers
+                        </p>
+                      )}
+                    </div>
+                  </ChannelInfoDialog>
                   <AssignChannelDialog
                     subscription={sub}
                     categories={categories}
