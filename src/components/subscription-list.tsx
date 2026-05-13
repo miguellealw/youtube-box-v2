@@ -329,7 +329,7 @@ export function SubscriptionList({
                           alt={sub.channelName}
                           width={56}
                           height={56}
-                          className="rounded-full hover:opacity-80 transition-opacity"
+                          className="size-14 rounded-full hover:opacity-80 transition-opacity"
                         />
                       ) : (
                         <div className="h-14 w-14 rounded-full bg-muted" />
@@ -365,7 +365,7 @@ export function SubscriptionList({
                           alt={sub.channelName}
                           width={40}
                           height={40}
-                          className="rounded-full hover:opacity-80 transition-opacity"
+                          className="size-10 rounded-full hover:opacity-80 transition-opacity"
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-muted" />

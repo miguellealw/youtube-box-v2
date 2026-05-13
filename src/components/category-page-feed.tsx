@@ -86,7 +86,7 @@ export function CategoryPageFeed({
                     alt=""
                     width={16}
                     height={16}
-                    className="rounded-full"
+                    className="size-4 rounded-full"
                   />
                 )}
                 {ch.channelName}

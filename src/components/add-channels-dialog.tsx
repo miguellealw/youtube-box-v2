@@ -219,7 +219,7 @@ export function AddChannelsDialog({
                           alt={sub.channelName}
                           width={40}
                           height={40}
-                          className="rounded-full shrink-0"
+                          className="size-10 rounded-full shrink-0"
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-muted shrink-0" />
