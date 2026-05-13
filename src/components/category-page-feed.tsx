@@ -86,6 +86,7 @@ export function CategoryPageFeed({
                     alt=""
                     width={16}
                     height={16}
+                    sizes="16px"
                     className="size-4 rounded-full"
                   />
                 )}

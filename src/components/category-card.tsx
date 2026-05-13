@@ -41,6 +41,7 @@ export function CategoryCard({
                     alt={ch.channelName}
                     width={28}
                     height={28}
+                    sizes="28px"
                     className="size-7 rounded-full ring-2 ring-background"
                   />
                 ) : (

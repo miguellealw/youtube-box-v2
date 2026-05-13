@@ -2,7 +2,9 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   images: {
-    unoptimized: true,
+    minimumCacheTTL: 2592000,
+    deviceSizes: [640, 1080, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
     remotePatterns: [
       { hostname: "i.ytimg.com" },
       { hostname: "yt3.ggpht.com" },

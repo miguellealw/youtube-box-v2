@@ -77,6 +77,7 @@ export function ChannelInfoDialog({
                 alt={subscription.channelName}
                 width={48}
                 height={48}
+                sizes="48px"
                 className="size-12 rounded-full shrink-0"
               />
             ) : (
