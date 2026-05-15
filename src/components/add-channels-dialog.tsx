@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { assignChannel, removeChannel } from "@/actions/channels"
 import { Plus, Check, Loader2, ListPlus } from "lucide-react"
 import { toast } from "sonner"
+import { signOutAction } from "@/actions/auth"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 
 function formatSubscriberCount(count: string) {
@@ -70,7 +71,13 @@ export function AddChannelsDialog({
       ? `/api/youtube/subscriptions?pageToken=${token}`
       : "/api/youtube/subscriptions"
     const res = await fetch(url)
-    if (!res.ok) throw new Error("Failed to load")
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      if (res.status === 401 && body?.error === "reauth_required") {
+        throw new Error("reauth_required")
+      }
+      throw new Error("Failed to load")
+    }
     return res.json() as Promise<SubscriptionPage>
   }, [])
 
@@ -84,7 +91,13 @@ export function AddChannelsDialog({
         setNextPageToken(nextPageToken)
         nextTokenRef.current = nextPageToken
       })
-      .catch(() => setError("Could not load subscriptions. Please try again."))
+      .catch((err) => {
+        if (err instanceof Error && err.message === "reauth_required") {
+          setError("reauth_required")
+        } else {
+          setError("Could not load subscriptions. Please try again.")
+        }
+      })
       .finally(() => setInitialLoading(false))
   }, [open, loadPage])
 
@@ -201,7 +214,26 @@ export function AddChannelsDialog({
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto min-h-0 -mx-4 px-4"
         >
-          {error && <p className="text-sm text-destructive py-2">{error}</p>}
+          {error && (
+            error === "reauth_required" ? (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm my-2">
+                <p className="font-medium text-destructive">YouTube access has expired</p>
+                <p className="mt-1 text-muted-foreground">
+                  Your YouTube connection needs to be renewed. Please sign out and sign back in.
+                </p>
+                <form action={signOutAction} className="mt-3">
+                  <button
+                    type="submit"
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <p className="text-sm text-destructive py-2">{error}</p>
+            )
+          )}
           <ul className="space-y-1.5 pb-2">
             {initialLoading
               ? Array.from({ length: 6 }).map((_, i) => <ChannelSkeleton key={i} />)

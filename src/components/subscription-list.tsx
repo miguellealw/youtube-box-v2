@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { AssignChannelDialog } from "@/components/assign-channel-dialog"
 import { ChannelInfoDialog } from "@/components/channel-info-dialog"
 import { cn } from "@/lib/utils"
+import { signOutAction } from "@/actions/auth"
 import type { Subscription, SubscriptionPage } from "@/lib/youtube"
 import type { Category } from "@/db/schema"
 
@@ -124,7 +125,13 @@ export function SubscriptionList({
       : "/api/youtube/subscriptions"
 
     const res = await fetch(url)
-    if (!res.ok) throw new Error("Failed to load")
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      if (res.status === 401 && body?.error === "reauth_required") {
+        throw new Error("reauth_required")
+      }
+      throw new Error("Failed to load")
+    }
     return res.json() as Promise<SubscriptionPage>
   }, [])
 
@@ -136,7 +143,13 @@ export function SubscriptionList({
         setNextPageToken(nextPageToken)
         nextTokenRef.current = nextPageToken
       })
-      .catch(() => setError("Could not load subscriptions. Please try again."))
+      .catch((err) => {
+        if (err instanceof Error && err.message === "reauth_required") {
+          setError("reauth_required")
+        } else {
+          setError("Could not load subscriptions. Please try again.")
+        }
+      })
       .finally(() => setInitialLoading(false))
   }, [loadPage])
 
@@ -230,6 +243,24 @@ export function SubscriptionList({
   )
 
   if (error) {
+    if (error === "reauth_required") {
+      return (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm">
+          <p className="font-medium text-destructive">YouTube access has expired</p>
+          <p className="mt-1 text-muted-foreground">
+            Your YouTube connection needs to be renewed. Please sign out and sign back in.
+          </p>
+          <form action={signOutAction} className="mt-3">
+            <button
+              type="submit"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
+      )
+    }
     return <p className="text-sm text-destructive">{error}</p>
   }
 

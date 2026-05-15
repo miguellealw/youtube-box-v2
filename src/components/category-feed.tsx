@@ -5,6 +5,7 @@ import { EyeOff, Eye } from "lucide-react"
 import { VideoCard, ShortCard } from "@/components/video-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { signOutAction } from "@/actions/auth"
 import type { Video } from "@/lib/youtube"
 
 function VideoSkeleton() {
@@ -39,15 +40,27 @@ export function CategoryFeed({
     setLoading(true)
     setError(null)
     fetch(`/api/youtube/feed?categoryId=${categoryId}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load")
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => null)
+          if (r.status === 401 && body?.error === "reauth_required") {
+            throw new Error("reauth_required")
+          }
+          throw new Error("Failed to load")
+        }
         return r.json() as Promise<{ videos: Video[]; watchedVideoIds: string[] }>
       })
       .then(({ videos, watchedVideoIds }) => {
         setVideos(videos)
         setWatchedSet(new Set(watchedVideoIds))
       })
-      .catch(() => setError("Could not load videos. Please try again."))
+      .catch((err) => {
+        if (err instanceof Error && err.message === "reauth_required") {
+          setError("reauth_required")
+        } else {
+          setError("Could not load videos. Please try again.")
+        }
+      })
       .finally(() => setLoading(false))
   }, [categoryId, refreshKey])
 
@@ -91,6 +104,24 @@ export function CategoryFeed({
   }
 
   if (error) {
+    if (error === "reauth_required") {
+      return (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm">
+          <p className="font-medium text-destructive">YouTube access has expired</p>
+          <p className="mt-1 text-muted-foreground">
+            Your YouTube connection needs to be renewed. Please sign out and sign back in.
+          </p>
+          <form action={signOutAction} className="mt-3">
+            <button
+              type="submit"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
+      )
+    }
     return <p className="text-sm text-destructive">{error}</p>
   }
 

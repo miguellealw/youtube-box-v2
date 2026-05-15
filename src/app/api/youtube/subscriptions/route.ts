@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { getAccessToken } from "@/lib/tokens"
+import { getAccessToken, ReauthRequiredError } from "@/lib/tokens"
 import { fetchSubscriptionPage } from "@/lib/youtube"
 import { cached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache"
 
@@ -24,6 +24,12 @@ export async function GET(request: NextRequest) {
     )
     return NextResponse.json(page)
   } catch (err) {
+    if (err instanceof ReauthRequiredError) {
+      return NextResponse.json(
+        { error: "reauth_required" },
+        { status: 401 }
+      )
+    }
     console.error("subscriptions route error:", err)
     return NextResponse.json(
       { error: "Failed to fetch subscriptions" },

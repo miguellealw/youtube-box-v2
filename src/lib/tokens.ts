@@ -2,6 +2,13 @@ import { db } from "@/db"
 import { accounts } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 
+export class ReauthRequiredError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "ReauthRequiredError"
+  }
+}
+
 export async function getAccessToken(userId: string): Promise<string> {
   const [account] = await db
     .select()
@@ -19,7 +26,7 @@ export async function getAccessToken(userId: string): Promise<string> {
   }
 
   if (!account.refresh_token) {
-    throw new Error("No refresh token — user must re-authenticate")
+    throw new ReauthRequiredError("No refresh token — user must re-authenticate")
   }
 
   const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -35,6 +42,9 @@ export async function getAccessToken(userId: string): Promise<string> {
 
   if (!response.ok) {
     const err = await response.text()
+    if (err.includes("invalid_grant")) {
+      throw new ReauthRequiredError(`Token refresh failed: ${err}`)
+    }
     throw new Error(`Token refresh failed: ${err}`)
   }
 

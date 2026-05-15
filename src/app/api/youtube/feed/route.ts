@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, categoryChannels, watchedVideos } from "@/db/schema"
 import { eq, and, inArray } from "drizzle-orm"
-import { getAccessToken } from "@/lib/tokens"
+import { getAccessToken, ReauthRequiredError } from "@/lib/tokens"
 import { fetchUploadsPlaylistId, fetchRecentVideos } from "@/lib/youtube"
 import { cached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache"
 import { allSettledLimited } from "@/lib/concurrency"
@@ -103,6 +103,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ videos, watchedVideoIds: watched.map((w) => w.videoId) })
   } catch (err) {
+    if (err instanceof ReauthRequiredError) {
+      return NextResponse.json(
+        { error: "reauth_required" },
+        { status: 401 }
+      )
+    }
     console.error("feed route error:", err)
     return NextResponse.json(
       { error: "Failed to fetch feed" },
